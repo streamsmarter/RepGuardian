@@ -1,0 +1,32 @@
+import { createServerComponentClient } from '@/lib/supabase/server';
+import { getCompanyContext } from '@/lib/company-context';
+import { FeedbackTable } from '@/components/feedback-table';
+
+export default async function FeedbackPage({
+  searchParams,
+}: {
+  searchParams: { sentiment?: string; severity?: string; search?: string };
+}) {
+  const { company_id } = await getCompanyContext();
+  const sentiment = searchParams.sentiment || 'all';
+  const severity = searchParams.severity || 'all';
+  const search = searchParams.search || '';
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Customer Feedback</h1>
+        <p className="text-muted-foreground">
+          Review and manage customer feedback and sentiment.
+        </p>
+      </div>
+      
+      <FeedbackTable 
+        companyId={company_id} 
+        initialSentiment={sentiment}
+        initialSeverity={severity}
+        initialSearch={search}
+      />
+    </div>
+  );
+}
