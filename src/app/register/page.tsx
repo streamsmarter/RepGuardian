@@ -14,7 +14,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const supabase = createBrowserComponentClient();
@@ -33,7 +32,7 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    console.log('Starting registration...', { email, companyName });
+    console.log('Starting registration...', { email });
 
     try {
       // Sign up the user
@@ -51,19 +50,6 @@ export default function RegisterPage() {
 
       if (!authData.user) {
         throw new Error('Failed to create user');
-      }
-
-      // Create the company for this user
-      const { error: companyError } = await supabase
-        .from('company')
-        .insert({
-          name: companyName,
-          user_id: authData.user.id,
-        } as any);
-
-      if (companyError) {
-        console.error('Company creation error:', companyError);
-        // Company creation may fail due to RLS - user can set up company after email verification
       }
 
       // Check if email confirmation is required
@@ -93,21 +79,6 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="companyName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Company Name
-              </label>
-              <Input
-                id="companyName"
-                type="text"
-                placeholder="Your Company"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full"
-              />
-            </div>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Email

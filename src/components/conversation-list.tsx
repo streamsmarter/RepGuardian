@@ -95,7 +95,7 @@ export function ConversationList({ companyId, selectedChatId }: ConversationList
   });
 
   const handleSelectConversation = (chatId: string) => {
-    router.push(`/app/inbox?chat=${chatId}`);
+    router.push(`/app?chat=${chatId}`);
   };
 
   const getStatusBadge = (status: string) => {

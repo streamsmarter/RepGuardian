@@ -16,7 +16,10 @@ export function KpiCard({ title, value, delta, description }: KpiCardProps) {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {delta !== undefined && (
-          <div className={`flex items-center text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          <div 
+            className="flex items-center text-xs"
+            style={{ color: isPositive ? '#3ecf8e' : '#CD8500' }}
+          >
             {isPositive ? (
               <TrendingUp className="h-4 w-4 mr-1" />
             ) : (

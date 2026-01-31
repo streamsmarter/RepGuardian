@@ -68,6 +68,7 @@ export default function SetupPage() {
           name: companyName.trim(),
           user_id: session.user.id,
           payment_plan: 'free',
+          crm_type: 'vagaro',
         } as any)
         .select()
         .single();
