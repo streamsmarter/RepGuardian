@@ -56,12 +56,11 @@ export default function RegisterPage() {
       if (authData.session) {
         // User is already logged in (email confirmation disabled in Supabase)
         toast.success('Account created successfully!');
-        router.push('/app');
+        router.push('/onboarding');
         router.refresh();
       } else {
-        // Email confirmation required
-        toast.success('Account created! Please check your email to verify your account.');
-        router.push('/login');
+        // Email confirmation required - redirect to confirmation page
+        router.push('/register/confirm');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');

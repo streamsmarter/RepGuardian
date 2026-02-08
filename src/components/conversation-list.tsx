@@ -13,9 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface ConversationListProps {
   companyId: string;
   selectedChatId?: string;
+  onSelectChat?: (chatId: string) => void;
 }
 
-export function ConversationList({ companyId, selectedChatId }: ConversationListProps) {
+export function ConversationList({ companyId, selectedChatId, onSelectChat }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const supabase = createBrowserComponentClient();
@@ -34,28 +35,27 @@ export function ConversationList({ companyId, selectedChatId }: ConversationList
         .order("status_updated_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
-      // Apply search filter if provided
-      if (searchQuery) {
-        query = query.or(
-          `client.first_name.ilike.%${searchQuery}%,client.last_name.ilike.%${searchQuery}%,client.phone_number.ilike.%${searchQuery}%`
-        );
-      }
-
       const { data, error } = await query;
 
+      console.log('Fetching chats for company:', companyId);
+      console.log('Chat query result:', data);
+      console.log('Chat query error:', error);
+
       if (error) {
+        console.error('Error fetching chats:', JSON.stringify(error, null, 2));
         throw error;
       }
 
-      // For each chat, get the last message
-      const chatsWithLastMessage = await Promise.all(
+      // For each chat, get messages (all for search, last for display)
+      const chatsWithMessages = await Promise.all(
         (data || []).map(async (chat) => {
-          const { data: messages } = await supabase
+          const { data: allMessages } = await supabase
             .from("messages")
-            .select("content, created_at")
+            .select("message, created_at")
             .eq("session_id", chat.id)
-            .order("created_at", { ascending: false })
-            .limit(1);
+            .order("created_at", { ascending: false });
+          
+          const lastMessage = allMessages && allMessages.length > 0 ? allMessages[0] : null;
 
           // Check if there are active conflicts for this client
           const { data: activeConflicts } = await supabase
@@ -83,19 +83,45 @@ export function ConversationList({ companyId, selectedChatId }: ConversationList
 
           return {
             ...chat,
-            lastMessage: messages && messages.length > 0 ? messages[0] : null,
+            lastMessage,
+            allMessages: allMessages || [],
             status
           };
         })
       );
 
-      return chatsWithLastMessage;
+      // Apply client-side search filter if provided
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return chatsWithMessages.filter((chat: any) => {
+          // Search by client_name
+          const clientName = chat.client_name?.toLowerCase() || '';
+          // Search by client first/last name (fallback)
+          const firstName = chat.client?.first_name?.toLowerCase() || '';
+          const lastName = chat.client?.last_name?.toLowerCase() || '';
+          // Search by message content
+          const hasMatchingMessage = chat.allMessages?.some(
+            (msg: any) => msg.message?.toLowerCase().includes(query)
+          );
+          
+          return clientName.includes(query) || 
+                 firstName.includes(query) || 
+                 lastName.includes(query) || 
+                 hasMatchingMessage;
+        });
+      }
+
+      return chatsWithMessages;
     },
     staleTime: 1000 * 60, // 1 minute
   });
 
   const handleSelectConversation = (chatId: string) => {
-    router.push(`/app?chat=${chatId}`);
+    if (onSelectChat) {
+      onSelectChat(chatId);
+    } else {
+      router.push(`/app?chat=${chatId}`);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -182,7 +208,7 @@ export function ConversationList({ companyId, selectedChatId }: ConversationList
               >
                 <div className="flex justify-between items-start mb-1">
                   <div className="font-medium">
-                    {chat.client?.first_name} {chat.client?.last_name}
+                    {chat.client_name || `${chat.client?.first_name || ''} ${chat.client?.last_name || ''}`.trim() || 'Unknown'}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {chat.lastMessage
@@ -191,7 +217,7 @@ export function ConversationList({ companyId, selectedChatId }: ConversationList
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                  {chat.lastMessage ? chat.lastMessage.content : "No messages yet"}
+                  {chat.lastMessage ? chat.lastMessage.message : "No messages yet"}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {getStatusBadge(chat.status)}

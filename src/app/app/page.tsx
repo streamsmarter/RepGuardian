@@ -2,9 +2,7 @@ import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConversationList } from '@/components/conversation-list';
-import { MessageThread } from '@/components/message-thread';
-import { MessageSquare } from 'lucide-react';
+import { ConversationsContainer } from '@/components/conversations-container';
 
 async function getKpiData(companyId: string) {
   const supabase = await createServerComponentClient();
@@ -37,14 +35,26 @@ async function getKpiData(companyId: string) {
   };
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: { chat?: string };
-}) {
-  const { company_id } = await getCompanyContext();
+export default async function DashboardPage() {
+  const { company_id, user } = await getCompanyContext();
+  console.log('Dashboard - User:', user.email, 'Company ID:', company_id);
+  
+  // Debug: Check what chats exist
+  const supabase = await createServerComponentClient();
+  const { data: allChats, error: chatError } = await supabase
+    .from('chat')
+    .select('id, company_id, client_name')
+    .limit(5);
+  console.log('DEBUG - All chats:', allChats, 'Error:', chatError);
+  
+  const { data: companyChats } = await supabase
+    .from('chat')
+    .select('id, company_id, client_name')
+    .eq('company_id', company_id)
+    .limit(5);
+  console.log('DEBUG - Company chats:', companyChats);
+  
   const kpiData = await getKpiData(company_id);
-  const selectedChatId = searchParams.chat;
   
   return (
     <div className="p-6 space-y-6 h-full">
@@ -84,31 +94,7 @@ export default async function DashboardPage({
           <CardTitle className="text-lg">Conversations</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="flex h-[500px]">
-            {/* Conversations List - Left Side */}
-            <div className="w-full md:w-80 lg:w-96 border-r flex flex-col overflow-hidden">
-              <ConversationList companyId={company_id} selectedChatId={selectedChatId} />
-            </div>
-            
-            {/* Message Thread - Right Side */}
-            <div className="hidden md:flex flex-1 flex-col overflow-hidden">
-              {selectedChatId ? (
-                <MessageThread chatId={selectedChatId} companyId={company_id} />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-muted/20">
-                  <div className="text-center p-8">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <MessageSquare className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-1">No conversation selected</h3>
-                    <p className="text-muted-foreground text-sm max-w-[250px]">
-                      Select a conversation from the list to view messages
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <ConversationsContainer companyId={company_id} />
         </CardContent>
       </Card>
     </div>

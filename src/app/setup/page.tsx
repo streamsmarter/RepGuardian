@@ -18,8 +18,8 @@ export default function SetupPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         router.push('/login');
         return;
       }
@@ -28,7 +28,7 @@ export default function SetupPage() {
       const { data: company } = await supabase
         .from('company')
         .select('id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .limit(1)
         .single();
       
@@ -54,32 +54,49 @@ export default function SetupPage() {
     setIsLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         toast.error('Please log in first');
         router.push('/login');
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('company')
         .insert({
           name: companyName.trim(),
-          user_id: session.user.id,
+          user_id: user.id,
           payment_plan: 'free',
           crm_type: 'vagaro',
         } as any)
         .select()
         .single();
 
-      if (error) {
-        console.error('Full error:', JSON.stringify(error, null, 2));
-        throw new Error(error.message || error.code || 'Failed to create company. Please check RLS policies in Supabase.');
+      if (companyError) {
+        console.error('Company error:', JSON.stringify(companyError, null, 2));
+        throw new Error(companyError.message || companyError.code || 'Failed to create company. Please check RLS policies in Supabase.');
       }
 
-      if (!data) {
+      if (!company) {
         throw new Error('Company was not created. Please check RLS policies in Supabase.');
+      }
+
+      // Also create the app_user record
+      const { error: appUserError } = await supabase
+        .from('app_user')
+        .insert({
+          user_id: user.id,
+          company_id: (company as any).id,
+          role: 'owner',
+          name: user.email?.split('@')[0] || 'User', // Use email prefix as name
+        } as any);
+
+      if (appUserError) {
+        console.error('App user error:', JSON.stringify(appUserError, null, 2));
+        // Clean up company if app_user creation fails
+        await supabase.from('company').delete().eq('id', (company as any).id);
+        throw new Error(appUserError.message || 'Failed to create user profile. Please check RLS policies for app_user table.');
       }
 
       toast.success('Company created successfully!');

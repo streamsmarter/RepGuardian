@@ -17,14 +17,12 @@ export type CompanyContextType = {
 export async function getCompanyContext(): Promise<CompanyContextType> {
   const supabase = await createServerComponentClient();
   
-  // Check if user is authenticated
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Check if user is authenticated (use getUser() for secure server-side validation)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (sessionError || !session) {
+  if (userError || !user) {
     redirect('/login');
   }
-  
-  const user = session.user;
   
   // Primary mapping: company.user_id = auth.user.id
   const { data: companyData, error: companyError } = await supabase
@@ -61,21 +59,19 @@ export async function getCompanyContext(): Promise<CompanyContextType> {
     };
   }
   
-  // No company found, redirect to setup
-  redirect('/setup');
+  // No company found, redirect to onboarding
+  redirect('/onboarding');
 }
 
 // Get all companies for the current user (for company switcher)
 export async function getUserCompanies() {
   const supabase = await createServerComponentClient();
   
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error } = await supabase.auth.getUser();
   
-  if (!session) {
+  if (error || !user) {
     return [];
   }
-  
-  const user = session.user;
   
   // Get owned company
   const { data: ownedCompany } = await supabase

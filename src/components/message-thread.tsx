@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserComponentClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,25 +21,50 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
   const router = useRouter();
   const supabase = createBrowserComponentClient();
   const queryClient = useQueryClient();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages for the selected chat
   const { data: messages, isLoading } = useQuery({
     queryKey: ["messages", chatId],
     queryFn: async () => {
+      // Ensure chatId is treated as a string for exact matching with session_id
+      const chatIdString = String(chatId);
+      
       const { data, error } = await supabase
         .from("messages")
         .select("*")
-        .eq("session_id", chatId)
+        .eq("session_id", chatIdString)
         .order("created_at", { ascending: true });
 
+      console.log('Fetching messages for chat:', chatIdString);
+      console.log('Messages result:', data);
+      console.log('Messages error:', error);
+
       if (error) {
+        console.error('Error fetching messages:', JSON.stringify(error, null, 2));
         throw error;
       }
 
-      return data || [];
+      // Double-check filter on client side to ensure exact match
+      const filteredMessages = (data || []).filter(
+        (msg: any) => msg.session_id === chatIdString
+      );
+      
+      console.log('Filtered messages:', filteredMessages.length);
+      return filteredMessages;
     },
     staleTime: 1000 * 10, // 10 seconds
   });
+
+  // Instantly scroll to bottom when messages load (no animation)
+  useEffect(() => {
+    if (messages && messages.length > 0 && scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages, chatId]);
 
   // Fetch chat details including client info
   const { data: chatDetails } = useQuery({
@@ -70,8 +95,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
       const newMessageData = {
         session_id: chatId,
         role: "assistant",
-        content,
-        message: { content, role: "assistant" },
+        message: content,
       };
 
       const { data, error } = await supabase
@@ -118,7 +142,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold">
-                {chatDetails.client?.first_name} {chatDetails.client?.last_name}
+                {(chatDetails as any).client_name || `${chatDetails.client?.first_name || ''} ${chatDetails.client?.last_name || ''}`.trim() || 'Unknown'}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {chatDetails.client?.phone_number}
@@ -137,52 +161,57 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
-              >
-                <div className={`max-w-[70%] ${i % 2 === 0 ? "mr-auto" : "ml-auto"}`}>
-                  <Skeleton className="h-20 w-full rounded-lg" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : messages && messages.length > 0 ? (
-          <div className="space-y-4">
-            {messages.map((message: any) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === "assistant" ? "justify-start" : "justify-end"
-                }`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    message.role === "assistant"
-                      ? "bg-muted text-foreground mr-auto"
-                      : "bg-primary text-primary-foreground ml-auto"
-                  }`}
-                >
-                  <div className="mb-1">{message.content}</div>
-                  <div className="text-xs opacity-70 text-right">
-                    {formatDate(message.created_at)}
+      <div ref={scrollAreaRef} className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full [&>[data-radix-scroll-area-viewport]>div]:!min-h-full [&>[data-radix-scroll-area-viewport]>div]:!flex [&>[data-radix-scroll-area-viewport]>div]:!flex-col [&>[data-radix-scroll-area-viewport]>div]:!justify-end">
+          <div className="p-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+                  >
+                    <div className={`max-w-[70%] ${i % 2 === 0 ? "mr-auto" : "ml-auto"}`}>
+                      <Skeleton className="h-20 w-full rounded-lg" />
+                    </div>
                   </div>
+                ))}
+              </div>
+            ) : messages && messages.length > 0 ? (
+              <div className="space-y-4">
+                {messages.map((message: any) => {
+                  const isUserMessage = message.role === "user";
+                  return (
+                    <div
+                      key={message.id}
+                      className={`flex ${isUserMessage ? "justify-start" : "justify-end"}`}
+                    >
+                      <div
+                        className={`max-w-[70%] rounded-lg p-3 ${
+                          isUserMessage
+                            ? "bg-muted text-foreground mr-auto"
+                            : "bg-primary text-primary-foreground ml-auto"
+                        }`}
+                      >
+                        <div className="mb-1">{message.message}</div>
+                        <div className="text-xs opacity-70 text-right">
+                          {formatDate(message.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  No messages in this conversation yet
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              No messages in this conversation yet
-            </div>
-          </div>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {/* Composer */}
       <div className="border-t p-4">
