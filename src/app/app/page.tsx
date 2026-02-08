@@ -21,12 +21,12 @@ async function getKpiData(companyId: string) {
     .eq('company_id', companyId)
     .eq('status', 'closed');
   
-  // Needs Attention
+  // Needs Attention - count clients with status "conflict" or "needs_human"
   const { count: attentionCount } = await supabase
-    .from('conflict')
+    .from('client')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
-    .eq('status', 'active');
+    .in('status', ['conflict', 'needs_human']);
   
   return {
     reviewsCollected: reviewsCount || 0,
@@ -75,10 +75,10 @@ export default async function DashboardPage() {
           description="Total reviews from customers"
         />
         <KpiCard
-          title="Customers Recovered"
+          title="Potential Revenue Recovered"
           value={kpiData.customersRecovered}
           delta={2}
-          description="Resolved conflicts"
+          description="Estimated monthly recurring revenue recovered"
         />
         <KpiCard
           title="Needs Attention"

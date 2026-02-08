@@ -180,7 +180,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
             ) : messages && messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map((message: any) => {
-                  const isUserMessage = message.role === "user";
+                  const isUserMessage = message.role === "human";
                   return (
                     <div
                       key={message.id}
