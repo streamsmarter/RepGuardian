@@ -65,6 +65,18 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
             .eq("company_id", companyId)
             .eq("status", "active");
 
+          // Fetch client data separately if not included in relation
+          let clientData = chat.client;
+          if (!clientData && chat.client_id) {
+            const { data: fetchedClient, error: clientError } = await supabase
+              .from("client")
+              .select("id, first_name, last_name, phone_number, review_submitted, review_request_sent, status")
+              .eq("id", chat.client_id)
+              .single();
+            console.log('Fetched client for', chat.client_id, ':', fetchedClient, 'Error:', clientError);
+            clientData = fetchedClient;
+          }
+
           // Check if there are closed conflicts for this client
           const { data: closedConflicts } = await supabase
             .from("conflict")
@@ -83,6 +95,7 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
 
           return {
             ...chat,
+            client: clientData,
             lastMessage,
             allMessages: allMessages || [],
             status
@@ -145,6 +158,14 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
     return null;
   };
 
+  // Status Indicator - returns color based on client.status from Supabase
+  const getStatusIndicatorColor = (clientStatus: string | null | undefined) => {
+    if (clientStatus === "conflict" || clientStatus === "needs_human") {
+      return "#CD8500"; // orange/amber for attention needed
+    }
+    return "#3ecf8e"; // green (default)
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -175,7 +196,7 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
+            type="text"
             placeholder="Search conversations..."
             className="pl-8"
             value={searchQuery}
@@ -207,8 +228,13 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
                 onClick={() => handleSelectConversation(chat.id)}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <div className="font-medium">
-                    {chat.client_name || `${chat.client?.first_name || ''} ${chat.client?.last_name || ''}`.trim() || 'Unknown'}
+                  <div className="font-medium flex items-center">
+                    <span>{chat.client_name || `${chat.client?.first_name || ''} ${chat.client?.last_name || ''}`.trim() || 'Unknown'}</span>
+                    {/* Status Indicator */}
+                    <div 
+                      className="w-[9px] h-[9px] rounded-full flex-shrink-0 ml-[10px]"
+                      style={{ backgroundColor: getStatusIndicatorColor(chat.client?.status) }}
+                    />
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {chat.lastMessage
@@ -216,12 +242,8 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
                       : formatDate(chat.created_at)}
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground line-clamp-1 mb-2">
+                <div className="text-sm text-muted-foreground line-clamp-1">
                   {chat.lastMessage ? chat.lastMessage.message : "No messages yet"}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {getStatusBadge(chat.status)}
-                  {chat.client && getReviewBadge(chat.client)}
                 </div>
               </div>
             ))}
