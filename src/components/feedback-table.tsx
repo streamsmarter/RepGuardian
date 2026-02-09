@@ -28,19 +28,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface FeedbackTableProps {
   companyId: string;
   initialSentiment?: string;
-  initialSeverity?: string;
   initialSearch?: string;
 }
 
 export function FeedbackTable({
   companyId,
   initialSentiment = "all",
-  initialSeverity = "all",
   initialSearch = "",
 }: FeedbackTableProps) {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sentiment, setSentiment] = useState(initialSentiment);
-  const [severity, setSeverity] = useState(initialSeverity);
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +47,6 @@ export function FeedbackTable({
   // Update URL with filters
   const updateFilters = (
     newSentiment?: string,
-    newSeverity?: string,
     newSearch?: string
   ) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -60,14 +56,6 @@ export function FeedbackTable({
         params.delete("sentiment");
       } else {
         params.set("sentiment", newSentiment);
-      }
-    }
-    
-    if (newSeverity !== undefined) {
-      if (newSeverity === "all") {
-        params.delete("severity");
-      } else {
-        params.set("severity", newSeverity);
       }
     }
     
@@ -84,9 +72,9 @@ export function FeedbackTable({
 
   // Fetch feedback data
   const { data: feedbackData, isLoading } = useQuery({
-    queryKey: ["feedback", companyId, sentiment, severity, searchQuery],
+    queryKey: ["feedback", companyId, sentiment, searchQuery],
     queryFn: async () => {
-      // Base query for feedback
+      // Base query for feedback with client data
       let query = supabase
         .from("feedback")
         .select(`
@@ -95,23 +83,12 @@ export function FeedbackTable({
         `)
         .eq("company_id", companyId);
 
-      // Apply sentiment filter
+      // Apply sentiment filter based on 1-5 scale
+      // 1-3 = negative, 4 = neutral, 5 = positive
       if (sentiment === "positive") {
-        query = query.gt("sentiment_score", 0.5);
+        query = query.gte("sentiment_score", 5);
       } else if (sentiment === "negative") {
-        query = query.lte("sentiment_score", 0.5);
-      }
-
-      // Apply severity filter
-      if (severity !== "all") {
-        query = query.eq("severity", severity);
-      }
-
-      // Apply search filter if provided
-      if (searchQuery) {
-        query = query.or(
-          `client.first_name.ilike.%${searchQuery}%,client.last_name.ilike.%${searchQuery}%,client.phone_number.ilike.%${searchQuery}%,feedback_message.ilike.%${searchQuery}%`
-        );
+        query = query.lte("sentiment_score", 3);
       }
 
       // Order by created_at
@@ -123,9 +100,28 @@ export function FeedbackTable({
         throw error;
       }
 
+      // Filter by search query on client side (client name, phone, feedback message)
+      let filteredData = data || [];
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        filteredData = filteredData.filter((feedback: any) => {
+          const firstName = feedback.client?.first_name?.toLowerCase() || "";
+          const lastName = feedback.client?.last_name?.toLowerCase() || "";
+          const phone = feedback.client?.phone_number || "";
+          const message = feedback.feedback_message?.toLowerCase() || "";
+          
+          return (
+            firstName.includes(searchLower) ||
+            lastName.includes(searchLower) ||
+            phone.includes(searchQuery) ||
+            message.includes(searchLower)
+          );
+        });
+      }
+
       // For each feedback, check if there are conflicts for this client
       const feedbackWithConflicts = await Promise.all(
-        (data || []).map(async (feedback) => {
+        filteredData.map(async (feedback: any) => {
           const { data: conflicts } = await supabase
             .from("conflict")
             .select("status")
@@ -133,10 +129,10 @@ export function FeedbackTable({
             .eq("company_id", companyId);
 
           const hasActiveConflict = conflicts?.some(
-            (conflict) => conflict.status === "active"
+            (conflict: any) => conflict.status === "active"
           );
           const hasResolvedConflict = conflicts?.some(
-            (conflict) => conflict.status === "closed"
+            (conflict: any) => conflict.status === "closed"
           );
 
           return {
@@ -157,17 +153,12 @@ export function FeedbackTable({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    updateFilters(undefined, undefined, searchQuery);
+    updateFilters(undefined, searchQuery);
   };
 
   const handleSentimentChange = (value: string) => {
     setSentiment(value);
-    updateFilters(value, undefined, undefined);
-  };
-
-  const handleSeverityChange = (value: string) => {
-    setSeverity(value);
-    updateFilters(undefined, value, undefined);
+    updateFilters(value, undefined);
   };
 
   const formatDate = (dateString: string) => {
@@ -271,7 +262,7 @@ export function FeedbackTable({
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              type="search"
+              type="text"
               placeholder="Search by client name, phone, or feedback content..."
               className="pl-8"
               value={searchQuery}
@@ -295,22 +286,20 @@ export function FeedbackTable({
 
       {/* Feedback Table */}
       <div className="border rounded-md">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b font-medium">
+        <div className="grid grid-cols-10 gap-4 p-4 border-b font-medium">
           <div className="col-span-2">Date</div>
           <div className="col-span-2">Client</div>
           <div className="col-span-4">Feedback</div>
           <div className="col-span-2">Sentiment</div>
-          <div className="col-span-2">Status</div>
         </div>
 
         {isLoading ? (
           <div className="p-4 space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-12 gap-4">
+              <div key={i} className="grid grid-cols-10 gap-4">
                 <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-4" />
-                <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-2" />
               </div>
             ))}
@@ -320,7 +309,7 @@ export function FeedbackTable({
             {feedbackData.map((feedback: any) => (
               <div
                 key={feedback.id}
-                className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/50 cursor-pointer"
+                className="grid grid-cols-10 gap-4 p-4 hover:bg-muted/50 cursor-pointer"
                 onClick={() => setSelectedFeedback(feedback)}
               >
                 <div className="col-span-2">
@@ -334,9 +323,6 @@ export function FeedbackTable({
                 </div>
                 <div className="col-span-2">
                   {getSentimentBadge(feedback.sentiment_score)}
-                </div>
-                <div className="col-span-2">
-                  {getConflictBadge(feedback.conflict_status)}
                 </div>
               </div>
             ))}

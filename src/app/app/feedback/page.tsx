@@ -1,15 +1,13 @@
-import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { FeedbackTable } from '@/components/feedback-table';
 
 export default async function FeedbackPage({
   searchParams,
 }: {
-  searchParams: { sentiment?: string; severity?: string; search?: string };
+  searchParams: { sentiment?: string; search?: string };
 }) {
   const { company_id } = await getCompanyContext();
   const sentiment = searchParams.sentiment || 'all';
-  const severity = searchParams.severity || 'all';
   const search = searchParams.search || '';
   
   return (
@@ -24,7 +22,6 @@ export default async function FeedbackPage({
       <FeedbackTable 
         companyId={company_id} 
         initialSentiment={sentiment}
-        initialSeverity={severity}
         initialSearch={search}
       />
     </div>
