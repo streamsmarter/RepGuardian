@@ -133,7 +133,7 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
     if (onSelectChat) {
       onSelectChat(chatId);
     } else {
-      router.push(`/app?chat=${chatId}`);
+      router.push(`/app/inbox?chat=${chatId}`);
     }
   };
 

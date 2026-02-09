@@ -75,8 +75,14 @@ export function Navbar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/app/settings')}>
-                Settings
+              <DropdownMenuItem onClick={() => router.push('/app')}>
+                Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/app/inbox')}>
+                Conversations
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/app/feedback')}>
+                Feedback
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="text-destructive">

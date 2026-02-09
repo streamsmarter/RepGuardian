@@ -100,7 +100,7 @@ export function FeedbackTable({
         throw error;
       }
 
-      // Filter by search query on client side (client name, phone, feedback message)
+      // Filter by search query on client side (client name, phone, feedback message, tags)
       let filteredData = data || [];
       if (searchQuery) {
         const searchLower = searchQuery.toLowerCase();
@@ -109,12 +109,17 @@ export function FeedbackTable({
           const lastName = feedback.client?.last_name?.toLowerCase() || "";
           const phone = feedback.client?.phone_number || "";
           const message = feedback.feedback_message?.toLowerCase() || "";
+          const tags = feedback.tags || [];
+          const tagsMatch = tags.some((tag: string) => 
+            tag.toLowerCase().includes(searchLower)
+          );
           
           return (
             firstName.includes(searchLower) ||
             lastName.includes(searchLower) ||
             phone.includes(searchQuery) ||
-            message.includes(searchLower)
+            message.includes(searchLower) ||
+            tagsMatch
           );
         });
       }
