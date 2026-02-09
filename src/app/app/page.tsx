@@ -2,7 +2,7 @@ import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConversationsContainer } from '@/components/conversations-container';
+import { ClientList } from '@/components/client-list';
 
 async function getKpiData(companyId: string) {
   const supabase = await createServerComponentClient();
@@ -88,13 +88,13 @@ export default async function DashboardPage() {
         />
       </div>
       
-      {/* Conversations Container */}
+      {/* Clients List */}
       <Card className="flex-1">
         <CardHeader className="pb-3 border-b">
-          <CardTitle className="text-lg">Conversations</CardTitle>
+          <CardTitle className="text-lg">Clients</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <ConversationsContainer companyId={company_id} />
+          <ClientList companyId={company_id} />
         </CardContent>
       </Card>
     </div>
