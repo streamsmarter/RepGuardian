@@ -179,17 +179,63 @@ export function FeedbackTable({
     }).format(date);
   };
 
-  const getSentimentBadge = (score: number) => {
-    if (score > 0.7) {
-      return <Badge className="bg-green-500">Very Positive</Badge>;
-    } else if (score > 0.5) {
-      return <Badge className="bg-green-400">Positive</Badge>;
-    } else if (score > 0.3) {
-      return <Badge className="bg-yellow-500">Neutral</Badge>;
-    } else if (score > 0.1) {
-      return <Badge className="bg-red-400">Negative</Badge>;
+  const getSentimentBadge = (score: number | null | undefined) => {
+    // Score is 1-5: 1-3 = bad, 4 = average, 5 = great
+    // Style: 10% bg opacity, 100% border opacity, text same color as border
+    if (score === null || score === undefined) {
+      return (
+        <Badge 
+          className="border"
+          style={{ 
+            backgroundColor: "rgba(107, 114, 128, 0.1)", 
+            borderColor: "#6b7280",
+            color: "#6b7280"
+          }}
+        >
+          Unknown
+        </Badge>
+      );
+    }
+    
+    if (score >= 5) {
+      return (
+        <Badge 
+          className="border"
+          style={{ 
+            backgroundColor: "rgba(62, 207, 142, 0.1)", 
+            borderColor: "#3ecf8e",
+            color: "#3ecf8e"
+          }}
+        >
+          Positive
+        </Badge>
+      );
+    } else if (score >= 4) {
+      return (
+        <Badge 
+          className="border"
+          style={{ 
+            backgroundColor: "rgba(234, 179, 8, 0.1)", 
+            borderColor: "#eab308",
+            color: "#eab308"
+          }}
+        >
+          Neutral
+        </Badge>
+      );
     } else {
-      return <Badge className="bg-red-500">Very Negative</Badge>;
+      return (
+        <Badge 
+          className="border"
+          style={{ 
+            backgroundColor: "rgba(239, 68, 68, 0.1)", 
+            borderColor: "#ef4444",
+            color: "#ef4444"
+          }}
+        >
+          Negative
+        </Badge>
+      );
     }
   };
 
@@ -244,17 +290,6 @@ export function FeedbackTable({
               <SelectItem value="negative">Negative</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={severity} onValueChange={handleSeverityChange}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Severity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Severity</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -264,8 +299,7 @@ export function FeedbackTable({
           <div className="col-span-2">Date</div>
           <div className="col-span-2">Client</div>
           <div className="col-span-4">Feedback</div>
-          <div className="col-span-1">Sentiment</div>
-          <div className="col-span-1">Severity</div>
+          <div className="col-span-2">Sentiment</div>
           <div className="col-span-2">Status</div>
         </div>
 
@@ -276,8 +310,7 @@ export function FeedbackTable({
                 <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-4" />
-                <Skeleton className="h-6 col-span-1" />
-                <Skeleton className="h-6 col-span-1" />
+                <Skeleton className="h-6 col-span-2" />
                 <Skeleton className="h-6 col-span-2" />
               </div>
             ))}
@@ -299,11 +332,8 @@ export function FeedbackTable({
                 <div className="col-span-4 truncate">
                   {feedback.feedback_message}
                 </div>
-                <div className="col-span-1">
-                  {getSentimentBadge(feedback.sentiment_score || 0.5)}
-                </div>
-                <div className="col-span-1">
-                  {getSeverityBadge(feedback.severity)}
+                <div className="col-span-2">
+                  {getSentimentBadge(feedback.sentiment_score)}
                 </div>
                 <div className="col-span-2">
                   {getConflictBadge(feedback.conflict_status)}
@@ -347,16 +377,10 @@ export function FeedbackTable({
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="font-medium mb-1">Sentiment:</div>
                   <div>
-                    <div className="font-medium mb-1">Sentiment:</div>
-                    <div>
-                      {getSentimentBadge(selectedFeedback.sentiment_score || 0.5)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Severity:</div>
-                    <div>{getSeverityBadge(selectedFeedback.severity)}</div>
+                    {getSentimentBadge(selectedFeedback.sentiment_score)}
                   </div>
                 </div>
 

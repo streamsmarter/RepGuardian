@@ -4,10 +4,16 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type');
 
   if (code) {
     const supabase = await createServerComponentClient();
     await supabase.auth.exchangeCodeForSession(code);
+    
+    // If this is a password recovery flow, redirect to reset password page
+    if (type === 'recovery') {
+      return NextResponse.redirect(new URL('/reset-password', requestUrl.origin));
+    }
     
     // Check if user has completed onboarding (has an app_user record)
     const { data: { user } } = await supabase.auth.getUser();

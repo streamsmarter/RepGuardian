@@ -84,7 +84,7 @@ export default async function DashboardPage() {
           title="Needs Attention"
           value={kpiData.needsAttention}
           delta={-3}
-          description="Active conflicts requiring action"
+          description="Clients that need your attention"
         />
       </div>
       
