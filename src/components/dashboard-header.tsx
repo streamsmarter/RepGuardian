@@ -6,7 +6,7 @@ export function DashboardHeader() {
   return (
     <div className="relative overflow-hidden rounded-3xl mt-2">
       <Image
-        src="/iPadOS18-Indigo-Landscape-Light.png"
+        src="/hero_bg.svg"
         alt="Dashboard background"
         fill
         className="object-cover"
