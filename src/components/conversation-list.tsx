@@ -48,7 +48,7 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
 
       // For each chat, get messages (all for search, last for display)
       const chatsWithMessages = await Promise.all(
-        (data || []).map(async (chat) => {
+        (data || []).map(async (chat: any) => {
           const { data: allMessages } = await supabase
             .from("messages")
             .select("message, created_at")
