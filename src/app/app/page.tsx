@@ -58,13 +58,33 @@ export default async function DashboardPage() {
   
   return (
     <div className="p-6 space-y-6 h-full">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your business performance and recent activity.
-        </p>
+      {/* Header with wavy background */}
+      <div className="relative overflow-hidden rounded-3xl mt-2" style={{ backgroundColor: '#3ecf8e' }}>
+        {/* Wavy SVG background */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-20"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill="white"
+            d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
+          <path
+            fill="white"
+            opacity="0.5"
+            d="M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,197.3C672,213,768,235,864,224C960,213,1056,171,1152,154.7C1248,139,1344,149,1392,154.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
+        </svg>
+        <div className="relative z-10 px-6 py-16">
+          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+          <p className="text-white/80">
+            Overview of your business performance and recent activity.
+          </p>
+        </div>
       </div>
+      
       
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-3">
