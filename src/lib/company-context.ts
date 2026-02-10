@@ -35,7 +35,7 @@ export async function getCompanyContext(): Promise<CompanyContextType> {
   if (companyData) {
     return {
       user,
-      company_id: companyData.id as string,
+      company_id: (companyData as any).id as string,
       company: companyData as Company,
       role: 'owner'
     };

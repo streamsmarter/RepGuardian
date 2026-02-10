@@ -100,7 +100,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
 
       const { data, error } = await supabase
         .from("messages")
-        .insert(newMessageData)
+        .insert(newMessageData as any)
         .select();
 
       if (error) {
@@ -142,10 +142,10 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold">
-                {(chatDetails as any).client_name || `${chatDetails.client?.first_name || ''} ${chatDetails.client?.last_name || ''}`.trim() || 'Unknown'}
+                {(chatDetails as any).client_name || `${(chatDetails as any).client?.first_name || ''} ${(chatDetails as any).client?.last_name || ''}`.trim() || 'Unknown'}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {chatDetails.client?.phone_number}
+                {(chatDetails as any).client?.phone_number}
               </p>
             </div>
           </div>
