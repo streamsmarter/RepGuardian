@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';

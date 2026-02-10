@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getCompanyContext } from '@/lib/company-context';
 import { FeedbackTable } from '@/components/feedback-table';
 
