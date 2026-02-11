@@ -179,25 +179,20 @@ export function ClientList({ companyId }: ClientListProps) {
 
       <ScrollArea className="flex-1">
         {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b bg-muted/30 text-sm font-medium text-muted-foreground sticky top-0">
-          <div className="col-span-3">Name</div>
-          <div className="col-span-2">Contact</div>
-          <div className="col-span-2">Added</div>
-          <div className="col-span-2">Status</div>
-          <div className="col-span-2">Review</div>
-          <div className="col-span-1"></div>
+        <div className="flex justify-between items-center px-4 py-3 border-b bg-muted/30 text-sm font-medium text-muted-foreground sticky top-0">
+          <div>Name</div>
+          <div>Status</div>
         </div>
 
       {isLoading ? (
           <div className="divide-y">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
-                <Skeleton className="h-4 col-span-3" />
-                <Skeleton className="h-4 col-span-2" />
-                <Skeleton className="h-4 col-span-2" />
-                <Skeleton className="h-6 col-span-2 w-20" />
-                <Skeleton className="h-6 col-span-2 w-20" />
-                <Skeleton className="h-8 col-span-1 w-8" />
+              <div key={i} className="flex justify-between items-center px-4 py-3">
+                <Skeleton className="h-4 w-32" />
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
               </div>
             ))}
           </div>
@@ -206,24 +201,13 @@ export function ClientList({ companyId }: ClientListProps) {
             {filteredClients.map((client: any) => (
               <div
                 key={client.id}
-                className="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-muted/50 transition-colors"
+                className="flex justify-between items-center px-4 py-3 hover:bg-muted/50 transition-colors"
               >
-                <div className="col-span-3 font-medium truncate">
+                <div className="font-medium truncate">
                   {client.first_name} {client.last_name}
                 </div>
-                <div className="col-span-2 text-sm text-muted-foreground truncate">
-                  {client.phone_number || client.email || '—'}
-                </div>
-                <div className="col-span-2 text-sm text-muted-foreground">
-                  {formatDate(client.created_at)}
-                </div>
-                <div className="col-span-2">
+                <div className="flex items-center gap-3">
                   {getStatusBadge(client.status)}
-                </div>
-                <div className="col-span-2">
-                  {getReviewBadge(client)}
-                </div>
-                <div className="col-span-1 flex justify-end">
                   <Button
                     variant="ghost"
                     size="icon"
