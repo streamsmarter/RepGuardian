@@ -191,7 +191,7 @@ export default function OnboardingPage() {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="pt-6">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
