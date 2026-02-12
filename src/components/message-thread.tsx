@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserComponentClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,18 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
     staleTime: 1000 * 10, // 10 seconds
   });
 
+  // Realtime message handler
+  const handleNewMessage = useCallback((msg: any) => {
+    queryClient.setQueryData(["messages", chatId], (prev: any[] | undefined) => {
+      if (!prev) return [msg];
+      if (prev.some((m) => m.id === msg.id)) return prev;
+      return [...prev, msg];
+    });
+  }, [chatId, queryClient]);
+
+  // Subscribe to realtime message inserts
+  useRealtimeMessages(chatId, handleNewMessage);
+
   // Instantly scroll to bottom when messages load (no animation)
   useEffect(() => {
     if (messages && messages.length > 0 && scrollAreaRef.current) {
@@ -94,22 +107,24 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      const newMessageData = {
-        session_id: chatId,
-        role: "assistant",
-        message: content,
-      };
+      const response = await fetch("/api/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: content,
+          chat_id: chatId,
+        }),
+      });
 
-      const { data, error } = await supabase
-        .from("messages")
-        .insert(newMessageData as any)
-        .select();
-
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Send message error:", response.status, errorData);
+        throw new Error(errorData.error || `Failed to send message (${response.status})`);
       }
 
-      return data;
+      return response;
     },
     onSuccess: () => {
       setNewMessage("");
@@ -221,6 +236,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
                 {messages.map((message: any) => {
                   const isUserMessage = message.role === "human";
                   const isAiHidden = message.role === "ai_hidden";
+                  const isRepresentative = message.role === "representative";
                   return (
                     <div
                       key={message.id}
@@ -232,6 +248,8 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
                             ? "bg-muted text-foreground mr-auto"
                             : isAiHidden
                             ? "bg-[#2D3561] text-white ml-auto border border-dashed border-[#3d4470]"
+                            : isRepresentative
+                            ? "bg-[#6C5CE7] text-white ml-auto"
                             : "bg-primary text-primary-foreground ml-auto"
                         }`}
                       >
