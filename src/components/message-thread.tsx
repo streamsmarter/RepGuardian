@@ -181,6 +181,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
               <div className="space-y-4">
                 {messages.map((message: any) => {
                   const isUserMessage = message.role === "human";
+                  const isAiHidden = message.role === "ai_hidden";
                   return (
                     <div
                       key={message.id}
@@ -190,11 +191,14 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
                         className={`max-w-[70%] rounded-lg p-3 ${
                           isUserMessage
                             ? "bg-muted text-foreground mr-auto"
+                            : isAiHidden
+                            ? "bg-[#2D3561] text-white ml-auto border border-dashed border-[#3d4470]"
                             : "bg-primary text-primary-foreground ml-auto"
                         }`}
                       >
                         <div className="mb-1">{message.message}</div>
-                        <div className="text-xs opacity-70 text-right">
+                        <div className={`text-xs text-right ${isAiHidden ? "opacity-80" : "opacity-70"}`}>
+                          {isAiHidden && <span className="mr-2">Draft</span>}
                           {formatDate(message.created_at)}
                         </div>
                       </div>
