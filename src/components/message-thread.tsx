@@ -7,6 +7,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -124,6 +126,32 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
     sendMessageMutation.mutate(newMessage);
   };
 
+  // Toggle autopilot mutation using RPC
+  const toggleAutopilotMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { data, error } = await (supabase.rpc as any)("set_chat_autopilot", {
+        p_chat_id: chatId,
+        p_autopilot: enabled,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat", chatId] });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update autopilot: ${error.message}`);
+    },
+  });
+
+  const handleAutopilotToggle = (enabled: boolean) => {
+    toggleAutopilotMutation.mutate(enabled);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
@@ -147,6 +175,17 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
               <p className="text-sm text-muted-foreground">
                 {(chatDetails as any).client?.phone_number}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="autopilot" className="text-sm text-muted-foreground">
+                Autopilot
+              </Label>
+              <Switch
+                id="autopilot"
+                checked={(chatDetails as any)?.autopilot ?? false}
+                onCheckedChange={handleAutopilotToggle}
+                disabled={toggleAutopilotMutation.isPending}
+              />
             </div>
           </div>
         ) : (
