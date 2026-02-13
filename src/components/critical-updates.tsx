@@ -100,9 +100,9 @@ export function CriticalUpdates() {
       </ScrollArea>
       <div className="p-3 border-t">
         <Link href="/app/activity">
-          <Button variant="ghost" className="w-full justify-between text-sm">
+          <Button variant="ghost" className="w-full justify-between text-sm group hover:text-white">
             View all activity
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 group-hover:text-white" />
           </Button>
         </Link>
       </div>
