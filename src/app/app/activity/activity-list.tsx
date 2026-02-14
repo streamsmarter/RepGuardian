@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AlertTriangle, Bell, CheckCircle2, Clock, Filter, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,9 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useQuery } from '@tanstack/react-query';
+import { createBrowserComponentClient } from '@/lib/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UpdateItem {
   id: string;
@@ -22,88 +25,55 @@ interface UpdateItem {
   date: string;
 }
 
-const mockUpdates: UpdateItem[] = [
-  {
-    id: '1',
-    type: 'critical',
-    title: 'Negative Review Alert',
-    description: 'John Smith left a 1-star review mentioning poor customer service experience',
-    time: '5 min ago',
-    date: 'Today',
-  },
-  {
-    id: '2',
-    type: 'warning',
-    title: 'Response Needed',
-    description: '3 clients are awaiting a response for more than 24 hours',
-    time: '1 hour ago',
-    date: 'Today',
-  },
-  {
-    id: '3',
-    type: 'success',
-    title: 'Issue Resolved',
-    description: 'Sarah Johnson marked her complaint as resolved after follow-up',
-    time: '2 hours ago',
-    date: 'Today',
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'New Client Added',
-    description: 'Mike Williams was added to your client list',
-    time: '3 hours ago',
-    date: 'Today',
-  },
-  {
-    id: '5',
-    type: 'critical',
-    title: 'Escalation Required',
-    description: 'Emily Davis has requested to speak with a manager',
-    time: '5 hours ago',
-    date: 'Today',
-  },
-  {
-    id: '6',
-    type: 'success',
-    title: 'Positive Review Received',
-    description: 'Robert Brown left a 5-star review praising your team',
-    time: '6 hours ago',
-    date: 'Today',
-  },
-  {
-    id: '7',
-    type: 'warning',
-    title: 'Follow-up Reminder',
-    description: 'Scheduled follow-up with Lisa Anderson is due',
-    time: '8 hours ago',
-    date: 'Today',
-  },
-  {
-    id: '8',
-    type: 'info',
-    title: 'Review Request Sent',
-    description: 'Automated review request sent to 5 clients',
-    time: 'Yesterday',
-    date: 'Yesterday',
-  },
-  {
-    id: '9',
-    type: 'success',
-    title: 'Customer Recovered',
-    description: 'James Wilson decided to continue service after resolution',
-    time: 'Yesterday',
-    date: 'Yesterday',
-  },
-  {
-    id: '10',
-    type: 'critical',
-    title: 'Complaint Filed',
-    description: 'New complaint received from Jennifer Martinez',
-    time: 'Yesterday',
-    date: 'Yesterday',
-  },
-];
+interface ActivityListProps {
+  companyId: string;
+}
+
+const mapColorToType = (color: string | null): UpdateItem['type'] => {
+  switch (color?.toLowerCase()) {
+    case 'red':
+    case 'critical':
+      return 'critical';
+    case 'amber':
+    case 'yellow':
+    case 'warning':
+      return 'warning';
+    case 'green':
+    case 'success':
+      return 'success';
+    case 'blue':
+    case 'info':
+    default:
+      return 'info';
+  }
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return 'Yesterday';
+  return `${diffDays} days ago`;
+};
+
+const formatDateGroup = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 86400000);
+  const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (itemDate.getTime() === today.getTime()) return 'Today';
+  if (itemDate.getTime() === yesterday.getTime()) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 const getIcon = (type: UpdateItem['type']) => {
   switch (type) {
@@ -152,7 +122,7 @@ const getTypeBadge = (type: UpdateItem['type']) => {
   );
 };
 
-export function ActivityList() {
+export function ActivityList({ companyId }: ActivityListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     critical: true,
@@ -160,8 +130,41 @@ export function ActivityList() {
     success: true,
     info: true,
   });
+  const supabase = createBrowserComponentClient();
 
-  const filteredUpdates = mockUpdates.filter((update) => {
+  const { data: updates, isLoading, error: queryError } = useQuery({
+    queryKey: ['activity-updates', companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('update')
+        .select('id, created_at, update_title, update_text, update_color')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching updates:', error);
+        throw error;
+      }
+      return data || [];
+    },
+  });
+
+  // Debug log
+  console.log('Updates data:', updates, 'Loading:', isLoading, 'Error:', queryError);
+
+  const mappedUpdates: UpdateItem[] = useMemo(() => {
+    if (!updates) return [];
+    return updates.map((item: any) => ({
+      id: item.id,
+      type: mapColorToType(item.update_color),
+      title: item.update_title || 'Update',
+      description: item.update_text || '',
+      time: formatRelativeTime(item.created_at),
+      date: formatDateGroup(item.created_at),
+    }));
+  }, [updates]);
+
+  const filteredUpdates = mappedUpdates.filter((update) => {
     if (!filters[update.type]) return false;
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
@@ -178,6 +181,22 @@ export function ActivityList() {
     acc[update.date].push(update);
     return acc;
   }, {} as Record<string, UpdateItem[]>);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-[600px]">
+        <div className="p-4 border-b flex gap-3">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-10" />
+        </div>
+        <div className="p-4 space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[600px]">

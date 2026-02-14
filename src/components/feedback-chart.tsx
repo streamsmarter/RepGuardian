@@ -69,11 +69,26 @@ export function FeedbackChart({ companyId }: FeedbackChartProps) {
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - daysToSubtract);
 
-    return feedbackData
-      .filter((item: any) => new Date(item.created_at) >= startDate)
-      .map((item: any) => ({
-        date: item.created_at,
-        feedback: item.sentiment_score,
+    // Filter and aggregate by date
+    const filtered = feedbackData.filter((item: any) => new Date(item.created_at) >= startDate);
+    
+    // Group by date and calculate average score
+    const groupedByDate: Record<string, { total: number; count: number }> = {};
+    filtered.forEach((item: any) => {
+      const dateKey = new Date(item.created_at).toISOString().split('T')[0];
+      if (!groupedByDate[dateKey]) {
+        groupedByDate[dateKey] = { total: 0, count: 0 };
+      }
+      groupedByDate[dateKey].total += item.sentiment_score;
+      groupedByDate[dateKey].count += 1;
+    });
+
+    // Convert to array sorted by date
+    return Object.entries(groupedByDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([dateKey, { total, count }]) => ({
+        date: dateKey,
+        feedback: Math.round((total / count) * 10) / 10,
       }));
   }, [feedbackData, timeRange]);
 

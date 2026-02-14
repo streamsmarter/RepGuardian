@@ -2,8 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActivityList } from './activity-list';
+import { getCompanyContext } from '@/lib/company-context';
 
-export default function ActivityPage() {
+export default async function ActivityPage() {
+  const { company_id } = await getCompanyContext();
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -18,7 +20,7 @@ export default function ActivityPage() {
           <CardTitle className="text-lg">All Updates</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <ActivityList />
+          <ActivityList companyId={company_id} />
         </CardContent>
       </Card>
     </div>

@@ -1,21 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { createBrowserComponentClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/feedback/data-table";
+import { columns, type Feedback } from "@/components/feedback/columns";
 
 interface FeedbackTableProps {
   companyId: string;
@@ -33,100 +24,26 @@ interface FeedbackTableProps {
 
 export function FeedbackTable({
   companyId,
-  initialSentiment = "all",
-  initialSearch = "",
 }: FeedbackTableProps) {
-  const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const [sentiment, setSentiment] = useState(initialSentiment);
-  const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const supabase = createBrowserComponentClient();
 
-  // Update URL with filters
-  const updateFilters = (
-    newSentiment?: string,
-    newSearch?: string
-  ) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    if (newSentiment !== undefined) {
-      if (newSentiment === "all") {
-        params.delete("sentiment");
-      } else {
-        params.set("sentiment", newSentiment);
-      }
-    }
-    
-    if (newSearch !== undefined) {
-      if (newSearch === "") {
-        params.delete("search");
-      } else {
-        params.set("search", newSearch);
-      }
-    }
-    
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  // Fetch feedback data
   const { data: feedbackData, isLoading } = useQuery({
-    queryKey: ["feedback", companyId, sentiment, searchQuery],
+    queryKey: ["feedback", companyId],
     queryFn: async () => {
-      // Base query for feedback with client data
-      let query = supabase
+      const { data, error } = await supabase
         .from("feedback")
         .select(`
           *,
           client:client(*)
         `)
-        .eq("company_id", companyId);
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false });
 
-      // Apply sentiment filter based on 1-5 scale
-      // 1-3 = negative, 4 = neutral, 5 = positive
-      if (sentiment === "positive") {
-        query = query.gte("sentiment_score", 5);
-      } else if (sentiment === "negative") {
-        query = query.lte("sentiment_score", 3);
-      }
+      if (error) throw error;
 
-      // Order by created_at
-      query = query.order("created_at", { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) {
-        throw error;
-      }
-
-      // Filter by search query on client side (client name, phone, feedback message, tags)
-      let filteredData = data || [];
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        filteredData = filteredData.filter((feedback: any) => {
-          const firstName = feedback.client?.first_name?.toLowerCase() || "";
-          const lastName = feedback.client?.last_name?.toLowerCase() || "";
-          const phone = feedback.client?.phone_number || "";
-          const message = feedback.feedback_message?.toLowerCase() || "";
-          const tags = feedback.tags || [];
-          const tagsMatch = tags.some((tag: string) => 
-            tag.toLowerCase().includes(searchLower)
-          );
-          
-          return (
-            firstName.includes(searchLower) ||
-            lastName.includes(searchLower) ||
-            phone.includes(searchQuery) ||
-            message.includes(searchLower) ||
-            tagsMatch
-          );
-        });
-      }
-
-      // For each feedback, check if there are conflicts for this client
       const feedbackWithConflicts = await Promise.all(
-        filteredData.map(async (feedback: any) => {
+        (data || []).map(async (feedback: any) => {
           const { data: conflicts } = await supabase
             .from("conflict")
             .select("status")
@@ -147,24 +64,14 @@ export function FeedbackTable({
               : hasResolvedConflict
               ? "resolved"
               : "none",
-          };
+          } as Feedback;
         })
       );
 
       return feedbackWithConflicts;
     },
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
   });
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateFilters(undefined, searchQuery);
-  };
-
-  const handleSentimentChange = (value: string) => {
-    setSentiment(value);
-    updateFilters(value, undefined);
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -176,8 +83,6 @@ export function FeedbackTable({
   };
 
   const getSentimentBadge = (score: number | null | undefined) => {
-    // Score is 1-5: 1-3 = bad, 4 = average, 5 = great
-    // Style: 10% bg opacity, 100% border opacity, text same color as border
     if (score === null || score === undefined) {
       return (
         <Badge 
@@ -235,19 +140,6 @@ export function FeedbackTable({
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case "high":
-        return <Badge variant="destructive">High</Badge>;
-      case "medium":
-        return <Badge variant="secondary">Medium</Badge>;
-      case "low":
-        return <Badge variant="outline">Low</Badge>;
-      default:
-        return <Badge variant="outline">Low</Badge>;
-    }
-  };
-
   const getConflictBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -259,87 +151,30 @@ export function FeedbackTable({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-[140px]" />
+        </div>
+        <div className="border rounded-md p-4 space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <form onSubmit={handleSearch} className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by client name, phone, or feedback content..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
-        <div className="flex gap-2">
-          <Select value={sentiment} onValueChange={handleSentimentChange}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Sentiment" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sentiment</SelectItem>
-              <SelectItem value="positive">Positive</SelectItem>
-              <SelectItem value="negative">Negative</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <DataTable 
+        columns={columns} 
+        data={feedbackData || []} 
+        onRowClick={(row) => setSelectedFeedback(row)}
+      />
 
-      {/* Feedback Table */}
-      <div className="border rounded-md">
-        <div className="grid grid-cols-10 gap-4 p-4 border-b font-medium">
-          <div className="col-span-2">Date</div>
-          <div className="col-span-2">Client</div>
-          <div className="col-span-4">Feedback</div>
-          <div className="col-span-2">Sentiment</div>
-        </div>
-
-        {isLoading ? (
-          <div className="p-4 space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-10 gap-4">
-                <Skeleton className="h-6 col-span-2" />
-                <Skeleton className="h-6 col-span-2" />
-                <Skeleton className="h-6 col-span-4" />
-                <Skeleton className="h-6 col-span-2" />
-              </div>
-            ))}
-          </div>
-        ) : feedbackData && feedbackData.length > 0 ? (
-          <div className="divide-y">
-            {feedbackData.map((feedback: any) => (
-              <div
-                key={feedback.id}
-                className="grid grid-cols-10 gap-4 p-4 hover:bg-muted/50 cursor-pointer"
-                onClick={() => setSelectedFeedback(feedback)}
-              >
-                <div className="col-span-2">
-                  {formatDate(feedback.created_at)}
-                </div>
-                <div className="col-span-2">
-                  {feedback.client?.first_name} {feedback.client?.last_name}
-                </div>
-                <div className="col-span-4 truncate">
-                  {feedback.feedback_message}
-                </div>
-                <div className="col-span-2">
-                  {getSentimentBadge(feedback.sentiment_score)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-muted-foreground">
-            No feedback found matching your filters
-          </div>
-        )}
-      </div>
-
-      {/* Feedback Detail Dialog */}
       <Dialog
         open={!!selectedFeedback}
         onOpenChange={(open) => {
