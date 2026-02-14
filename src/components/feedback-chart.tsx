@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 const chartConfig = {
   feedback: {
     label: "Feedback Score",
-    color: "#22c55e",
+    color: "#10b981",
   },
 } satisfies ChartConfig
 
@@ -147,12 +147,12 @@ export function FeedbackChart({ companyId }: FeedbackChartProps) {
               <linearGradient id="fillFeedback" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="#22c55e"
+                  stopColor="#10b981"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="#22c55e"
+                  stopColor="#10b981"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -191,7 +191,7 @@ export function FeedbackChart({ companyId }: FeedbackChartProps) {
               dataKey="feedback"
               type="natural"
               fill="url(#fillFeedback)"
-              stroke="#22c55e"
+              stroke="#10b981"
               strokeWidth={2}
             />
           </AreaChart>

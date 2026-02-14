@@ -90,12 +90,14 @@ export function DataTable<TData, TValue>({
           }
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Sentiment" />
+            <SelectValue placeholder="All Priority" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Sentiment</SelectItem>
-            <SelectItem value="positive">Positive</SelectItem>
-            <SelectItem value="negative">Negative</SelectItem>
+            <SelectItem value="all">All Priority</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+            <SelectItem value="at_risk">At risk</SelectItem>
+            <SelectItem value="monitor">Monitor</SelectItem>
+            <SelectItem value="promote">Promote</SelectItem>
           </SelectContent>
         </Select>
       </div>

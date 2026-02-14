@@ -85,14 +85,7 @@ export function FeedbackTable({
   const getSentimentBadge = (score: number | null | undefined) => {
     if (score === null || score === undefined) {
       return (
-        <Badge 
-          className="border"
-          style={{ 
-            backgroundColor: "rgba(107, 114, 128, 0.1)", 
-            borderColor: "#6b7280",
-            color: "#6b7280"
-          }}
-        >
+        <Badge variant="outline" className="text-muted-foreground">
           Unknown
         </Badge>
       );
@@ -100,40 +93,19 @@ export function FeedbackTable({
     
     if (score >= 5) {
       return (
-        <Badge 
-          className="border"
-          style={{ 
-            backgroundColor: "rgba(62, 207, 142, 0.1)", 
-            borderColor: "#3ecf8e",
-            color: "#3ecf8e"
-          }}
-        >
+        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
           Positive
         </Badge>
       );
     } else if (score >= 4) {
       return (
-        <Badge 
-          className="border"
-          style={{ 
-            backgroundColor: "rgba(234, 179, 8, 0.1)", 
-            borderColor: "#eab308",
-            color: "#eab308"
-          }}
-        >
+        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">
           Neutral
         </Badge>
       );
     } else {
       return (
-        <Badge 
-          className="border"
-          style={{ 
-            backgroundColor: "rgba(239, 68, 68, 0.1)", 
-            borderColor: "#ef4444",
-            color: "#ef4444"
-          }}
-        >
+        <Badge className="bg-destructive/10 text-destructive border-destructive/20">
           Negative
         </Badge>
       );

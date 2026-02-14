@@ -19,11 +19,11 @@ const chartConfig = {
   },
   positive: {
     label: "Positive",
-    color: "#22c55e",
+    color: "#10b981",
   },
   negative: {
     label: "Negative",
-    color: "#f59e0b",
+    color: "#f43f5e",
   },
 } satisfies ChartConfig
 
@@ -54,8 +54,8 @@ export function FeedbackDonutChart({ companyId }: FeedbackDonutChartProps) {
     const negative = feedbackData.filter((f: any) => f.sentiment_score <= 3).length;
 
     return [
-      { sentiment: "positive", count: positive, fill: "#22c55e" },
-      { sentiment: "negative", count: negative, fill: "#f59e0b" },
+      { sentiment: "positive", count: positive, fill: "#10b981" },
+      { sentiment: "negative", count: negative, fill: "#f43f5e" },
     ];
   }, [feedbackData]);
 
@@ -129,11 +129,11 @@ export function FeedbackDonutChart({ companyId }: FeedbackDonutChartProps) {
       </div>
       <div className="flex items-center justify-center gap-4 text-sm pt-2">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-green-500" />
+          <div className="h-3 w-3 rounded-full bg-emerald-500" />
           <span className="text-muted-foreground">Positive</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-amber-500" />
+          <div className="h-3 w-3 rounded-full bg-destructive" />
           <span className="text-muted-foreground">Negative</span>
         </div>
       </div>

@@ -31,17 +31,10 @@ const formatDate = (dateString: string) => {
   }).format(date)
 }
 
-const getSentimentBadge = (score: number | null | undefined) => {
+const getPriorityBadge = (score: number | null | undefined) => {
   if (score === null || score === undefined) {
     return (
-      <Badge 
-        className="border"
-        style={{ 
-          backgroundColor: "rgba(107, 114, 128, 0.1)", 
-          borderColor: "#6b7280",
-          color: "#6b7280"
-        }}
-      >
+      <Badge variant="outline" className="text-muted-foreground">
         Unknown
       </Badge>
     )
@@ -49,41 +42,26 @@ const getSentimentBadge = (score: number | null | undefined) => {
   
   if (score >= 5) {
     return (
-      <Badge 
-        className="border"
-        style={{ 
-          backgroundColor: "rgba(62, 207, 142, 0.1)", 
-          borderColor: "#3ecf8e",
-          color: "#3ecf8e"
-        }}
-      >
-        Positive
+      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+        Promote
       </Badge>
     )
-  } else if (score >= 4) {
+  } else if (score === 4) {
     return (
-      <Badge 
-        className="border"
-        style={{ 
-          backgroundColor: "rgba(234, 179, 8, 0.1)", 
-          borderColor: "#eab308",
-          color: "#eab308"
-        }}
-      >
-        Neutral
+      <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+        Monitor
+      </Badge>
+    )
+  } else if (score === 3) {
+    return (
+      <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+        At risk
       </Badge>
     )
   } else {
     return (
-      <Badge 
-        className="border"
-        style={{ 
-          backgroundColor: "rgba(239, 68, 68, 0.1)", 
-          borderColor: "#ef4444",
-          color: "#ef4444"
-        }}
-      >
-        Negative
+      <Badge className="bg-destructive/10 text-destructive border-destructive/20">
+        Urgent
       </Badge>
     )
   }
@@ -153,19 +131,21 @@ export const columns: ColumnDef<Feedback>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="-ml-4 hover:bg-muted hover:text-foreground"
         >
-          Sentiment
+          Priority
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
     cell: ({ row }) => {
-      return getSentimentBadge(row.getValue("sentiment_score"))
+      return getPriorityBadge(row.getValue("sentiment_score"))
     },
     filterFn: (row, id, value) => {
       const score = row.getValue(id) as number | null
       if (value === "all") return true
-      if (value === "positive") return score !== null && score >= 5
-      if (value === "negative") return score !== null && score <= 3
+      if (value === "promote") return score !== null && score >= 5
+      if (value === "monitor") return score !== null && score === 4
+      if (value === "at_risk") return score !== null && score === 3
+      if (value === "urgent") return score !== null && score <= 2
       return true
     },
   },
