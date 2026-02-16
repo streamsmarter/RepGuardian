@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AlertTriangle, Bell, CheckCircle2, Clock, Filter, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -131,13 +131,14 @@ export function ActivityList({ companyId }: ActivityListProps) {
     info: true,
   });
   const supabase = createBrowserComponentClient();
+  const queryClient = useQueryClient();
 
   const { data: updates, isLoading, error: queryError } = useQuery({
     queryKey: ['activity-updates', companyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('update')
-        .select('id, created_at, update_title, update_text, update_color')
+        .select('id, created_at, update_title, update_text, update_color, read_status')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false });
 
@@ -149,8 +150,32 @@ export function ActivityList({ companyId }: ActivityListProps) {
     },
   });
 
-  // Debug log
-  console.log('Updates data:', updates, 'Loading:', isLoading, 'Error:', queryError);
+  // Mark all unread updates as read when the component mounts
+  useEffect(() => {
+    const markUpdatesAsRead = async () => {
+      if (!updates || updates.length === 0) return;
+      
+      const unreadIds = updates
+        .filter((update: any) => update.read_status === false)
+        .map((update: any) => update.id);
+      
+      if (unreadIds.length === 0) return;
+
+      const { error } = await (supabase
+        .from('update') as any)
+        .update({ read_status: true })
+        .in('id', unreadIds);
+
+      if (error) {
+        console.error('Error marking updates as read:', error);
+      } else {
+        // Invalidate navbar updates query to remove the notification dot
+        queryClient.invalidateQueries({ queryKey: ['navbar-updates'] });
+      }
+    };
+
+    markUpdatesAsRead();
+  }, [updates, supabase, queryClient]);
 
   const mappedUpdates: UpdateItem[] = useMemo(() => {
     if (!updates) return [];

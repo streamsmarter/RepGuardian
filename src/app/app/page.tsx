@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
+import { Users, Heart, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { CriticalUpdates } from '@/components/critical-updates';
@@ -10,19 +11,33 @@ import { CriticalUpdates } from '@/components/critical-updates';
 async function getKpiData(companyId: string) {
   const supabase = await createServerComponentClient();
   
-  // Reviews Collected
-  const { count: reviewsCount } = await supabase
+  // Retention Rate - percentage of clients not in conflict/needs_human status
+  const { count: totalClients } = await supabase
+    .from('client')
+    .select('*', { count: 'exact', head: true })
+    .eq('company_id', companyId);
+  
+  const { count: retainedClients } = await supabase
     .from('client')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
-    .eq('review_submitted', true);
+    .not('status', 'in', '(conflict,needs_human,churned)');
   
-  // Customers Recovered
-  const { count: recoveredCount } = await supabase
-    .from('conflict')
+  const retentionRate = totalClients ? Math.round((retainedClients || 0) / totalClients * 100) : 0;
+  
+  // Health Score - based on positive feedback ratio
+  const { count: totalFeedback } = await supabase
+    .from('feedback')
+    .select('*', { count: 'exact', head: true })
+    .eq('company_id', companyId);
+  
+  const { count: positiveFeedback } = await supabase
+    .from('feedback')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
-    .eq('status', 'closed');
+    .gte('sentiment_score', 4);
+  
+  const healthScore = totalFeedback ? Math.round((positiveFeedback || 0) / totalFeedback * 100) : 0;
   
   // Needs Attention - count clients with status "conflict" or "needs_human"
   const { count: attentionCount } = await supabase
@@ -32,8 +47,8 @@ async function getKpiData(companyId: string) {
     .in('status', ['conflict', 'needs_human']);
   
   return {
-    reviewsCollected: reviewsCount || 0,
-    customersRecovered: recoveredCount || 0,
+    retentionRate,
+    healthScore,
     needsAttention: attentionCount || 0,
   };
 }
@@ -68,22 +83,22 @@ export default async function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          title="Reviews Collected"
-          value={kpiData.reviewsCollected}
-          delta={5}
-          description="Total reviews from customers"
+          title="Retention Rate"
+          value={`${kpiData.retentionRate}%`}
+          icon={Users}
+          color="#10b981"
         />
         <KpiCard
-          title="Potential Revenue Recovered"
-          value={kpiData.customersRecovered}
-          delta={2}
-          description="Estimated monthly recurring revenue recovered"
+          title="Health Score"
+          value={`${kpiData.healthScore}%`}
+          icon={Heart}
+          color="#f43f5e"
         />
         <KpiCard
           title="Needs Attention"
           value={kpiData.needsAttention}
-          delta={-3}
-          description="Clients that need your attention"
+          icon={AlertTriangle}
+          color="#f59e0b"
         />
       </div>
       

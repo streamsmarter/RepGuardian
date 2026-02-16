@@ -1,40 +1,46 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface KpiCardProps {
   title: string;
   value: number | string;
-  delta?: number;
-  description?: string;
+  change?: string;
+  changeType?: 'positive' | 'negative';
+  icon?: LucideIcon;
+  color?: string;
 }
 
-export function KpiCard({ title, value, delta, description }: KpiCardProps) {
-  const isPositive = delta !== undefined && delta >= 0;
-  
+export function KpiCard({ 
+  title, 
+  value, 
+  change, 
+  changeType = 'positive',
+  icon: Icon, 
+  color = '#3ecf8e' 
+}: KpiCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">{title}</CardTitle>
-        {delta !== undefined && (
-          <div 
-            className="flex items-center text-xs"
-            style={{ color: isPositive ? '#3ecf8e' : '#CD8500' }}
-          >
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4 mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 mr-1" />
-            )}
-            {isPositive ? '+' : ''}{delta}%
-          </div>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
+      {Icon && (
+        <div 
+          className="flex h-12 w-12 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${color}15` }}
+        >
+          <Icon className="h-5 w-5" style={{ color }} />
+        </div>
+      )}
+      <div className="flex flex-col">
+        <span className="text-sm text-muted-foreground">{title}</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold">{value}</span>
+          {change && (
+            <span 
+              className="text-sm"
+              style={{ color: changeType === 'positive' ? '#10b981' : '#f43f5e' }}
+            >
+              {changeType === 'positive' ? '↑' : '↓'}{change}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
