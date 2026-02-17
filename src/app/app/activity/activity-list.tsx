@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { AlertTriangle, Bell, CheckCircle2, Clock, Filter, Search } from 'lucide-react';
+import { AlertTriangle, Bell, CheckCircle2, Clock, Filter, RefreshCcw, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,14 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 interface UpdateItem {
   id: string;
@@ -313,9 +321,32 @@ export function ActivityList({ companyId }: ActivityListProps) {
               </div>
             </div>
           ))}
-          {filteredUpdates.length === 0 && (
+          {filteredUpdates.length === 0 && !searchQuery && (
+            <Empty className="bg-muted/30 py-12">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Bell />
+                </EmptyMedia>
+                <EmptyTitle>No Notifications</EmptyTitle>
+                <EmptyDescription className="max-w-xs text-pretty">
+                  You&apos;re all caught up. New notifications will appear here.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.reload()}
+                  className="hover:!bg-[#10b981] hover:!text-white hover:!border-[#10b981]"
+                >
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </EmptyContent>
+            </Empty>
+          )}
+          {filteredUpdates.length === 0 && searchQuery && (
             <div className="text-center text-muted-foreground py-8">
-              {searchQuery ? 'No activity matches your search' : 'No activity found'}
+              No activity matches your search
             </div>
           )}
         </div>

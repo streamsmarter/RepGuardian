@@ -2,19 +2,14 @@
 
 export function DashboardHeader() {
   return (
-    <div 
-      className="relative overflow-hidden rounded-3xl mt-2"
-      style={{
-        backgroundImage: 'url(/hero_bg_exomesh.svg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <div className="relative z-10 px-6 py-[72px]">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-        <p className="text-white/80">
-          Overview of your business performance and recent activity.
-        </p>
+    <div className="flex items-center justify-between">
+      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span className="text-sm font-medium text-emerald-500">All systems operational</span>
       </div>
     </div>
   );

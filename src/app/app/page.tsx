@@ -3,41 +3,40 @@ export const dynamic = 'force-dynamic';
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
-import { Users, Heart, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Heart, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { CriticalUpdates } from '@/components/critical-updates';
+import { GoogleReviews } from '@/components/google-reviews';
 
 async function getKpiData(companyId: string) {
   const supabase = await createServerComponentClient();
   
-  // Retention Rate - percentage of clients not in conflict/needs_human status
-  const { count: totalClients } = await supabase
-    .from('client')
+  // Active Conversations - count of chats for this company
+  const { count: activeConversations } = await supabase
+    .from('chat')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId);
   
-  const { count: retainedClients } = await supabase
-    .from('client')
-    .select('*', { count: 'exact', head: true })
-    .eq('company_id', companyId)
-    .not('status', 'in', '(conflict,needs_human,churned)');
+  // Health Score - from company's reputation_score object
+  const { data: companyData } = await (supabase
+    .from('company') as any)
+    .select('reputation_score')
+    .eq('id', companyId)
+    .single();
   
-  const retentionRate = totalClients ? Math.round((retainedClients || 0) / totalClients * 100) : 0;
+  const reputationScoreValue = companyData?.reputation_score?.company_reputation_score || 0;
   
-  // Health Score - based on positive feedback ratio
-  const { count: totalFeedback } = await supabase
-    .from('feedback')
-    .select('*', { count: 'exact', head: true })
-    .eq('company_id', companyId);
+  // Get indicator text based on score
+  const getReputationIndicator = (score: number): string => {
+    if (score === 0) return 'Unknown';
+    if (score < 3) return 'Terrible';
+    if (score < 4) return 'Bad';
+    if (score < 4.7) return 'Moderate';
+    return 'Healthy';
+  };
   
-  const { count: positiveFeedback } = await supabase
-    .from('feedback')
-    .select('*', { count: 'exact', head: true })
-    .eq('company_id', companyId)
-    .gte('sentiment_score', 4);
-  
-  const healthScore = totalFeedback ? Math.round((positiveFeedback || 0) / totalFeedback * 100) : 0;
+  const reputationIndicator = getReputationIndicator(reputationScoreValue);
   
   // Needs Attention - count clients with status "conflict" or "needs_human"
   const { count: attentionCount } = await supabase
@@ -47,8 +46,9 @@ async function getKpiData(companyId: string) {
     .in('status', ['conflict', 'needs_human']);
   
   return {
-    retentionRate,
-    healthScore,
+    activeConversations: activeConversations || 0,
+    reputationScore: reputationScoreValue,
+    reputationIndicator,
     needsAttention: attentionCount || 0,
   };
 }
@@ -79,18 +79,17 @@ export default async function DashboardPage() {
       {/* Header with LightRays background */}
       <DashboardHeader />
       
-      
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          title="Retention Rate"
-          value={`${kpiData.retentionRate}%`}
-          icon={Users}
+          title="Active Conversations"
+          value={kpiData.activeConversations}
+          icon={MessageSquare}
           color="#10b981"
         />
         <KpiCard
-          title="Health Score"
-          value={`${kpiData.healthScore}%`}
+          title="Reputation Score"
+          value={kpiData.reputationIndicator}
           icon={Heart}
           color="#f43f5e"
         />
@@ -102,10 +101,15 @@ export default async function DashboardPage() {
         />
       </div>
       
-      {/* Critical Updates */}
-      <Card>
-        <CriticalUpdates />
-      </Card>
+      {/* Google Reviews and Critical Updates */}
+      <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-4">
+        <Card>
+          <GoogleReviews />
+        </Card>
+        <Card>
+          <CriticalUpdates />
+        </Card>
+      </div>
     </div>
   );
 }
