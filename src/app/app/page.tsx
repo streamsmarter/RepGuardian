@@ -7,7 +7,7 @@ import { MessageSquare, Heart, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { CriticalUpdates } from '@/components/critical-updates';
-import { GoogleReviews } from '@/components/google-reviews';
+import { ReviewsTrendChart } from '@/components/reviews-trend-chart';
 
 type CompanyReputation = {
   reputation_score?: {
@@ -15,30 +15,36 @@ type CompanyReputation = {
   };
 };
 
+function getReputationIndicator(score: number): string {
+  if (score === 0) return 'Unknown';
+  if (score < 3) return 'Terrible';
+  if (score < 4) return 'Bad';
+  if (score < 4.7) return 'Moderate';
+  return 'Healthy';
+}
+
 async function getKpiData(companyId: string) {
   const supabase = await createServerComponentClient();
 
+  // Active Conversations - count of chats for this company
   const { count: activeConversations } = await supabase
     .from('chat')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId);
 
+  // Health Score - from company's reputation_score object
   const { data: companyData } = await supabase
     .from('company')
     .select('reputation_score')
     .eq('id', companyId)
     .single();
 
-  const reputationScoreValue = (companyData as CompanyReputation | null)?.reputation_score?.company_reputation_score || 0;
+  const reputationScoreValue =
+    (companyData as CompanyReputation | null)?.reputation_score?.company_reputation_score || 0;
 
-  const getReputationIndicator = (score: number): string => {
-    if (score === 0) return 'Unknown';
-    if (score < 3) return 'Terrible';
-    if (score < 4) return 'Bad';
-    if (score < 4.7) return 'Moderate';
-    return 'Healthy';
-  };
+  const reputationIndicator = getReputationIndicator(reputationScoreValue);
 
+  // Needs Attention - count clients with status "conflict" or "needs_human"
   const { count: attentionCount } = await supabase
     .from('client')
     .select('*', { count: 'exact', head: true })
@@ -47,7 +53,8 @@ async function getKpiData(companyId: string) {
 
   return {
     activeConversations: activeConversations || 0,
-    reputationIndicator: getReputationIndicator(reputationScoreValue),
+    reputationScore: reputationScoreValue,
+    reputationIndicator,
     needsAttention: attentionCount || 0,
   };
 }
@@ -61,17 +68,32 @@ export default async function DashboardPage() {
       <DashboardHeader />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard title="Active Conversations" value={kpiData.activeConversations} icon={MessageSquare} color="#10b981" />
-        <KpiCard title="Reputation Score" value={kpiData.reputationIndicator} icon={Heart} color="#f43f5e" />
-        <KpiCard title="Needs Attention" value={kpiData.needsAttention} icon={AlertTriangle} color="#f59e0b" />
+        <KpiCard
+          title="Active Conversations"
+          value={kpiData.activeConversations}
+          icon={MessageSquare}
+          color="#10b981"
+        />
+        <KpiCard
+          title="Reputation Score"
+          value={kpiData.reputationIndicator}
+          icon={Heart}
+          color="#f43f5e"
+        />
+        <KpiCard
+          title="Needs Attention"
+          value={kpiData.needsAttention}
+          icon={AlertTriangle}
+          color="#f59e0b"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-4">
         <Card>
-          <GoogleReviews />
+          <ReviewsTrendChart companyId={company_id} />
         </Card>
         <Card>
-          <CriticalUpdates />
+          <CriticalUpdates companyId={company_id} />
         </Card>
       </div>
     </div>
