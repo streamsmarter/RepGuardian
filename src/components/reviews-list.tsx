@@ -7,11 +7,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface Review {
   id: string
-  author_name: string
-  rating: number
-  text: string
-  created_at: string
-  source: string
+  reviewer_name: string | null
+  stars: number | null
+  body: string | null
+  review_published_at: string | null
+  source: string | null
 }
 
 const StarRating = ({ rating }: { rating: number }) => {
@@ -52,9 +52,9 @@ export function ReviewsList({ companyId }: ReviewsListProps) {
     queryFn: async () => {
       const { data, error } = await (supabase
         .from('review') as any)
-        .select('id, author_name, rating, text, created_at, source')
+        .select('id, reviewer_name, stars, body, review_published_at, source')
         .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
+        .order('review_published_at', { ascending: false })
         .limit(20)
       
       if (error) throw error
@@ -97,7 +97,7 @@ export function ReviewsList({ companyId }: ReviewsListProps) {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <span className="font-medium">{review.author_name}</span>
+                  <span className="font-medium">{review.reviewer_name || 'Anonymous'}</span>
                   {review.source && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                       {review.source}
@@ -105,12 +105,12 @@ export function ReviewsList({ companyId }: ReviewsListProps) {
                   )}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(review.created_at)}
+                  {review.review_published_at ? formatDate(review.review_published_at) : ''}
                 </span>
               </div>
-              <StarRating rating={review.rating} />
+              <StarRating rating={review.stars || 0} />
               <p className="text-sm text-muted-foreground mt-2">
-                {review.text}
+                {review.body || 'No review text'}
               </p>
             </div>
           ))}
