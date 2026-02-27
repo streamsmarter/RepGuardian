@@ -139,56 +139,62 @@ export function Navbar() {
         {/* Right side - Notifications and Profile */}
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-muted hover:text-foreground">
-                <Bell className="h-5 w-5" />
-                {hasUnreadUpdates && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+          {mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-muted hover:text-foreground">
+                  <Bell className="h-5 w-5" />
+                  {hasUnreadUpdates && (
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80" align="end" forceMount>
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {updates && updates.length > 0 ? (
+                  updates.map((update: any) => {
+                    const type = mapColorToType(update.update_color);
+                    return (
+                      <DropdownMenuItem
+                        key={update.id}
+                        className="flex items-start gap-3 p-3 cursor-pointer focus:bg-muted focus:text-foreground"
+                        onClick={() => router.push('/app/activity')}
+                      >
+                        <div className="mt-0.5">{getIcon(type)}</div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {update.update_title}
+                          </p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {update.update_text}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatRelativeTime(update.created_at)}
+                          </p>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No notifications
+                  </div>
                 )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80" align="end" forceMount>
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {updates && updates.length > 0 ? (
-                updates.map((update: any) => {
-                  const type = mapColorToType(update.update_color);
-                  return (
-                    <DropdownMenuItem
-                      key={update.id}
-                      className="flex items-start gap-3 p-3 cursor-pointer focus:bg-muted focus:text-foreground"
-                      onClick={() => router.push('/app/activity')}
-                    >
-                      <div className="mt-0.5">{getIcon(type)}</div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {update.update_title}
-                        </p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {update.update_text}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatRelativeTime(update.created_at)}
-                        </p>
-                      </div>
-                    </DropdownMenuItem>
-                  );
-                })
-              ) : (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No notifications
-                </div>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="justify-center text-primary font-medium cursor-pointer focus:bg-muted focus:text-primary"
-                onClick={() => router.push('/app/activity')}
-              >
-                See all updates
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="justify-center text-primary font-medium cursor-pointer focus:bg-muted focus:text-primary"
+                  onClick={() => router.push('/app/activity')}
+                >
+                  See all updates
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" size="icon" className="relative h-9 w-9">
+              <Bell className="h-5 w-5" />
+            </Button>
+          )}
 
           {/* Profile */}
           {mounted ? (
