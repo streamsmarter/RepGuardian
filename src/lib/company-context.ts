@@ -25,7 +25,7 @@ export async function getCompanyContext(): Promise<CompanyContextType> {
   }
   
   // Primary mapping: company.user_id = auth.user.id
-  const { data: companyData, error: companyError } = await supabase
+  const { data: companyData } = await supabase
     .from('company')
     .select('*')
     .eq('user_id', user.id)
@@ -33,16 +33,17 @@ export async function getCompanyContext(): Promise<CompanyContextType> {
     .single();
   
   if (companyData) {
+    const company = companyData as unknown as Company;
     return {
       user,
-      company_id: (companyData as any).id as string,
-      company: companyData as Company,
+      company_id: company.id,
+      company,
       role: 'owner'
     };
   }
   
   // Secondary mapping: app_user.user_id = auth.user.id -> company_id
-  const { data: appUserData, error: appUserError } = await supabase
+  const { data: appUserData } = await supabase
     .from('app_user')
     .select('*, company:company(*)')
     .eq('user_id', user.id)

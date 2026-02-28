@@ -66,9 +66,6 @@ export default function OnboardingPage() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      console.log('=== ONBOARDING DEBUG ===');
-      console.log('User:', user?.id, user?.email);
-      console.log('User error:', userError);
       
       if (!user) {
         toast.error('Please log in first');
@@ -77,7 +74,6 @@ export default function OnboardingPage() {
       }
 
       // Create the company first
-      console.log('Creating company with:', { name: companyName.trim(), user_id: user.id });
       const { data: company, error: companyError } = await supabase
         .from('company')
         .insert({
@@ -89,8 +85,6 @@ export default function OnboardingPage() {
         .select()
         .single();
 
-      console.log('Company result:', company);
-      console.log('Company error:', companyError);
 
       if (companyError) {
         console.error('Company creation error:', JSON.stringify(companyError, null, 2));
@@ -108,15 +102,12 @@ export default function OnboardingPage() {
         role: 'owner',
         name: fullName.trim(),
       };
-      console.log('Creating app_user with:', appUserData);
       
       const { data: appUserResult, error: appUserError } = await supabase
         .from('app_user')
         .insert(appUserData as any)
         .select();
 
-      console.log('App user result:', appUserResult);
-      console.log('App user error:', appUserError);
 
       if (appUserError) {
         console.error('App user creation error:', JSON.stringify(appUserError, null, 2));
@@ -125,13 +116,12 @@ export default function OnboardingPage() {
         throw new Error(appUserError.message || appUserError.code || 'Failed to create user profile. Check RLS policies for app_user table.');
       }
 
-      console.log('=== ONBOARDING SUCCESS ===');
       toast.success('Welcome to RepGuardian!');
       router.push('/app');
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Onboarding error:', error);
-      toast.error(error.message || 'Failed to complete setup');
+      toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to complete setup');
     } finally {
       setIsLoading(false);
     }

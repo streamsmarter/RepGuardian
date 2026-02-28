@@ -25,7 +25,7 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
     queryKey: ["conversations", companyId, searchQuery],
     queryFn: async () => {
       // Base query for chats
-      let query = supabase
+      const query = supabase
         .from("chat")
         .select(`
           *,
@@ -37,9 +37,6 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
 
       const { data, error } = await query;
 
-      console.log('Fetching chats for company:', companyId);
-      console.log('Chat query result:', data);
-      console.log('Chat query error:', error);
 
       if (error) {
         console.error('Error fetching chats:', JSON.stringify(error, null, 2));
@@ -73,7 +70,6 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
               .select("id, first_name, last_name, phone_number, review_submitted, review_request_sent, status")
               .eq("id", chat.client_id)
               .single();
-            console.log('Fetched client for', chat.client_id, ':', fetchedClient, 'Error:', clientError);
             clientData = fetchedClient;
           }
 

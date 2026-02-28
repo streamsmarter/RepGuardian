@@ -104,9 +104,9 @@ export default function SetupPage() {
       toast.success('Company created successfully!');
       router.push('/app');
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Setup error:', error);
-      toast.error(error.message || 'Failed to create company');
+      toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to create company');
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +125,7 @@ export default function SetupPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Welcome to RepGuardian</CardTitle>
-          <CardDescription>Let's set up your company to get started</CardDescription>
+          <CardDescription>Let&apos;s set up your company to get started</CardDescription>
         </CardHeader>
         <form onSubmit={handleSetup}>
           <CardContent className="space-y-4">

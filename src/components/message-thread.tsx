@@ -39,9 +39,6 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
         .eq("session_id", chatIdString)
         .order("created_at", { ascending: true });
 
-      console.log('Fetching messages for chat:', chatIdString);
-      console.log('Messages result:', data);
-      console.log('Messages error:', error);
 
       if (error) {
         console.error('Error fetching messages:', JSON.stringify(error, null, 2));
@@ -53,7 +50,6 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
         (msg: any) => msg.session_id === chatIdString
       );
       
-      console.log('Filtered messages:', filteredMessages.length);
       return filteredMessages;
     },
     staleTime: 1000 * 10, // 10 seconds

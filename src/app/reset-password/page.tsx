@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
@@ -46,8 +46,8 @@ export default function ResetPasswordPage() {
 
       setIsSuccess(true);
       toast.success('Password updated successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update password');
+    } catch (error: unknown) {
+      toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to update password');
     } finally {
       setIsLoading(false);
     }

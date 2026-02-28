@@ -34,7 +34,6 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    console.log('Starting registration...', { email });
 
     try {
       // Sign up the user
@@ -64,8 +63,8 @@ export default function RegisterPage() {
         // Email confirmation required - redirect to confirmation page
         router.push('/register/confirm');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create account');
+    } catch (error: unknown) {
+      toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }

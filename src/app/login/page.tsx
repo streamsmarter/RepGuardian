@@ -24,7 +24,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -36,8 +36,8 @@ export default function LoginPage() {
       toast.success('Logged in successfully');
       router.push('/app');
       router.refresh();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to login');
+    } catch (error: unknown) {
+      toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to login');
     } finally {
       setIsLoading(false);
     }
