@@ -4,10 +4,9 @@ import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
 import { MessageSquare, Heart, AlertTriangle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { CriticalUpdates } from '@/components/critical-updates';
-import { GoogleReviews } from '@/components/google-reviews';
+import { ReviewsTrendChart } from '@/components/reviews-trend-chart';
 
 type CompanyReputation = {
   reputation_score?: {
@@ -67,12 +66,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-4">
-        <Card>
-          <GoogleReviews />
-        </Card>
-        <Card>
-          <CriticalUpdates />
-        </Card>
+        <ReviewsTrendChart companyId={company_id} />
+        <div className="rounded-xl border bg-card">
+          <CriticalUpdates companyId={company_id} />
+        </div>
       </div>
     </div>
   );

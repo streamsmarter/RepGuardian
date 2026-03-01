@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { AlertTriangle, Bell, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { createBrowserComponentClient } from '@/lib/supabase/client';
 
 interface UpdateItem {
   id: string;
@@ -13,36 +15,43 @@ interface UpdateItem {
   time: string;
 }
 
-const mockUpdates: UpdateItem[] = [
-  {
-    id: '1',
-    type: 'critical',
-    title: 'Negative Review Alert',
-    description: 'John Smith left a 1-star review',
-    time: '5 min ago',
-  },
-  {
-    id: '2',
-    type: 'warning',
-    title: 'Response Needed',
-    description: '3 clients awaiting response',
-    time: '1 hour ago',
-  },
-  {
-    id: '3',
-    type: 'success',
-    title: 'Issue Resolved',
-    description: 'Sarah Johnson marked as resolved',
-    time: '2 hours ago',
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'New Client Added',
-    description: 'Mike Williams joined',
-    time: '3 hours ago',
-  },
-];
+interface CriticalUpdatesProps {
+  companyId: string;
+}
+
+const mapColorToType = (color: string | null): UpdateItem['type'] => {
+  switch (color?.toLowerCase()) {
+    case 'red':
+    case 'critical':
+      return 'critical';
+    case 'amber':
+    case 'yellow':
+    case 'warning':
+      return 'warning';
+    case 'green':
+    case 'success':
+      return 'success';
+    case 'blue':
+    case 'info':
+    default:
+      return 'info';
+  }
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return 'Yesterday';
+  return `${diffDays} days ago`;
+};
 
 const getIcon = (type: UpdateItem['type']) => {
   switch (type) {
@@ -70,32 +79,64 @@ const getAccentColor = (type: UpdateItem['type']) => {
   }
 };
 
-export function CriticalUpdates() {
+export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
+  const supabase = createBrowserComponentClient();
+
+  const { data: updates, isLoading } = useQuery({
+    queryKey: ['dashboard-updates', companyId],
+    queryFn: async () => {
+      const { data, error } = await (supabase
+        .from('update') as any)
+        .select('id, created_at, update_title, update_text, update_color')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!companyId,
+  });
+
+  const mappedUpdates: UpdateItem[] = (updates || []).map((item: any) => ({
+    id: item.id,
+    type: mapColorToType(item.update_color),
+    title: item.update_title || 'Update',
+    description: item.update_text || '',
+    time: formatRelativeTime(item.created_at),
+  }));
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
-        <h3 className="font-semibold text-base">Critical Issues & Updates</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Recent activity requiring attention</p>
+        <h3 className="font-semibold text-base">Activity</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Latest updates from your business</p>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-2">
-          {mockUpdates.map((update) => (
-            <div
-              key={update.id}
-              className={`p-3 rounded-lg border-l-4 transition-colors hover:bg-muted/50 cursor-pointer ${getAccentColor(update.type)}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">{getIcon(update.type)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-sm truncate">{update.title}</p>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{update.time}</span>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground px-1 py-2">Loading activity...</div>
+          ) : mappedUpdates.length === 0 ? (
+            <div className="text-sm text-muted-foreground px-1 py-2">No activity found.</div>
+          ) : (
+            mappedUpdates.map((update) => (
+              <div
+                key={update.id}
+                className={`p-3 rounded-lg border-l-4 transition-colors hover:bg-muted/50 cursor-pointer ${getAccentColor(update.type)}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">{getIcon(update.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-sm truncate">{update.title}</p>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{update.time}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{update.description}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{update.description}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </ScrollArea>
       <div className="p-3 border-t">
