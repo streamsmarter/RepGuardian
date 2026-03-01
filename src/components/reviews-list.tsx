@@ -3,7 +3,6 @@
 import { Star } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { createBrowserComponentClient } from '@/lib/supabase/client'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface Review {
   id: string
@@ -88,8 +87,7 @@ export function ReviewsList({ companyId }: ReviewsListProps) {
   return (
     <div className="rounded-xl border bg-card p-6">
       <h3 className="text-lg font-semibold mb-4">Recent Reviews</h3>
-      <ScrollArea className="h-[400px]">
-        <div className="space-y-4 pr-4">
+      <div className="space-y-4">
           {reviews.map((review) => (
             <div
               key={review.id}
@@ -114,8 +112,7 @@ export function ReviewsList({ companyId }: ReviewsListProps) {
               </p>
             </div>
           ))}
-        </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
