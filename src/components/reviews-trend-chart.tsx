@@ -47,9 +47,10 @@ export function ReviewsTrendChart({ companyId }: ReviewsTrendChartProps) {
     queryFn: async () => {
       const { data, error } = await (supabase
         .from("review") as any)
-        .select("created_at")
+        .select("review_published_at")
         .eq("company_id", companyId)
-        .order("created_at", { ascending: true });
+        .not("review_published_at", "is", null)
+        .order("review_published_at", { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -70,11 +71,11 @@ export function ReviewsTrendChart({ companyId }: ReviewsTrendChartProps) {
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - daysToSubtract);
 
-    const filtered = reviewData.filter((item: { created_at: string }) => new Date(item.created_at) >= startDate);
+    const filtered = reviewData.filter((item: { review_published_at: string }) => new Date(item.review_published_at) >= startDate);
 
     const groupedByDate: Record<string, number> = {};
-    filtered.forEach((item: { created_at: string }) => {
-      const dateKey = new Date(item.created_at).toISOString().split("T")[0];
+    filtered.forEach((item: { review_published_at: string }) => {
+      const dateKey = new Date(item.review_published_at).toISOString().split("T")[0];
       groupedByDate[dateKey] = (groupedByDate[dateKey] || 0) + 1;
     });
 
@@ -108,7 +109,7 @@ export function ReviewsTrendChart({ companyId }: ReviewsTrendChartProps) {
         <div className="grid flex-1 gap-1">
           <CardTitle>Reviews Trend</CardTitle>
           <CardDescription>
-            Showing review activity based on created dates
+            Showing review activity based on published dates
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
