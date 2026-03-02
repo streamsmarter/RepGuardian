@@ -14,10 +14,6 @@ interface UpdateItem {
   time: string;
 }
 
-type CriticalUpdatesProps = {
-  companyId: string;
-};
-
 type UpdateRow = {
   id: string;
   created_at?: string | null;
@@ -96,7 +92,7 @@ function rowToItem(u: UpdateRow): UpdateItem {
   };
 }
 
-export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
+export function CriticalUpdates() {
   const [rows, setRows] = useState<UpdateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +105,7 @@ export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`/api/updates?companyId=${encodeURIComponent(companyId)}`, {
+        const res = await fetch('/api/updates', {
           cache: 'no-store',
         });
 
@@ -128,7 +124,7 @@ export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
     return () => {
       cancelled = true;
     };
-  }, [companyId]);
+  }, []);
 
   const items = useMemo(() => rows.map(rowToItem), [rows]);
 

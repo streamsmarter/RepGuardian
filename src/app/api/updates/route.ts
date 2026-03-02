@@ -3,18 +3,35 @@ import { createServerComponentClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const companyId = searchParams.get('companyId');
-
-    if (!companyId) {
-      return NextResponse.json({ error: 'Missing companyId' }, { status: 400 });
-    }
-
     const supabase = await createServerComponentClient();
 
-    // Adjust select columns if you want strictness.
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: company, error: companyError } = await supabase
+      .from('company')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (companyError) {
+      return NextResponse.json({ error: companyError.message }, { status: 500 });
+    }
+
+    const companyId = (company as { id: string } | null)?.id;
+
+    if (!companyId) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
     const { data, error } = await supabase
       .from('update')
       .select('*')

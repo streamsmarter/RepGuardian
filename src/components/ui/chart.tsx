@@ -168,7 +168,22 @@ function ChartTooltipContent({
     return null
   }
 
-  const nestLabel = payload.length === 1 && indicator !== "dot"
+  const seenTooltipSeriesKeys = new Set<string>()
+
+  const uniquePayload = [...payload]
+    .filter((item) => item.type !== "none")
+    .reverse()
+    .filter((item) => {
+      const key = `${nameKey || item.name || item.dataKey || "value"}`
+      const isFirstOccurrence = !seenTooltipSeriesKeys.has(key)
+      if (isFirstOccurrence) {
+        seenTooltipSeriesKeys.add(key)
+      }
+      return isFirstOccurrence
+    })
+    .reverse()
+
+  const nestLabel = uniquePayload.length === 1 && indicator !== "dot"
 
   return (
     <div
@@ -179,16 +194,14 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload
-          .filter((item) => item.type !== "none")
-          .map((item, index) => {
+        {uniquePayload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
             const indicatorColor = color || item.payload.fill || item.color
 
             return (
               <div
-                key={item.dataKey}
+                key={`${item.dataKey ?? item.name ?? "value"}-${index}`}
                 className={cn(
                   "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                   indicator === "dot" && "items-center"

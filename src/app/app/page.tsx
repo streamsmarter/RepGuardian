@@ -91,8 +91,8 @@ export default async function Page() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[7fr_3fr]">
         <ReviewsTrendChart companyId={company_id} />
 
-        <Card className="gap-0 py-0">
-          <CriticalUpdates companyId={company_id} />
+        <Card className="h-full min-h-[480px] gap-0 py-0">
+          <CriticalUpdates />
         </Card>
       </div>
     </div>
