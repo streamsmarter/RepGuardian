@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-
 import { createServerComponentClient } from '@/lib/supabase/server';
 import { getCompanyContext } from '@/lib/company-context';
 import { KpiCard } from '@/components/kpi-card';
@@ -8,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { CriticalUpdates } from '@/components/critical-updates';
 import { ReviewsTrendChart } from '@/components/reviews-trend-chart';
+
+export const dynamic = 'force-dynamic';
 
 type CompanyReputation = {
   reputation_score?: {
@@ -59,7 +59,7 @@ async function getKpiData(companyId: string) {
   };
 }
 
-export default async function DashboardPage() {
+export default async function Page() {
   const { company_id } = await getCompanyContext();
   const kpiData = await getKpiData(company_id);
 

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, Bell, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Bell, CheckCircle2, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 
@@ -13,36 +14,26 @@ interface UpdateItem {
   time: string;
 }
 
-const mockUpdates: UpdateItem[] = [
-  {
-    id: '1',
-    type: 'critical',
-    title: 'Negative Review Alert',
-    description: 'John Smith left a 1-star review',
-    time: '5 min ago',
-  },
-  {
-    id: '2',
-    type: 'warning',
-    title: 'Response Needed',
-    description: '3 clients awaiting response',
-    time: '1 hour ago',
-  },
-  {
-    id: '3',
-    type: 'success',
-    title: 'Issue Resolved',
-    description: 'Sarah Johnson marked as resolved',
-    time: '2 hours ago',
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'New Client Added',
-    description: 'Mike Williams joined',
-    time: '3 hours ago',
-  },
-];
+type CriticalUpdatesProps = {
+  companyId: string;
+};
+
+type UpdateRow = {
+  id: string;
+  created_at?: string | null;
+  company_id?: string | null;
+
+  // try these common fields; adjust once you confirm actual schema
+  type?: string | null;
+  severity?: string | null;
+  level?: string | null;
+  status?: string | null;
+
+  title?: string | null;
+  message?: string | null;
+  description?: string | null;
+  body?: string | null;
+};
 
 const getIcon = (type: UpdateItem['type']) => {
   switch (type) {
@@ -70,34 +61,125 @@ const getAccentColor = (type: UpdateItem['type']) => {
   }
 };
 
-export function CriticalUpdates() {
+function normalizeType(u: UpdateRow): UpdateItem['type'] {
+  const s = (u.type ?? u.severity ?? u.level ?? u.status ?? '').toLowerCase();
+  if (s.includes('critical') || s.includes('urgent') || s.includes('sev1') || s.includes('high')) return 'critical';
+  if (s.includes('warning') || s.includes('attention') || s.includes('needs') || s.includes('conflict')) return 'warning';
+  if (s.includes('success') || s.includes('resolved') || s.includes('fixed')) return 'success';
+  return 'info';
+}
+
+function timeAgo(iso?: string | null) {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  const now = Date.now();
+  const diff = Math.max(0, now - t);
+
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function rowToItem(u: UpdateRow): UpdateItem {
+  return {
+    id: u.id,
+    type: normalizeType(u),
+    title: u.title ?? u.message ?? 'Update',
+    description: u.description ?? u.body ?? '',
+    time: timeAgo(u.created_at),
+  };
+}
+
+export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
+  const [rows, setRows] = useState<UpdateRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(`/api/updates?companyId=${encodeURIComponent(companyId)}`, {
+          cache: 'no-store',
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error ?? 'Failed to load updates');
+
+        if (!cancelled) setRows(json.data ?? []);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? 'Failed to load updates');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId]);
+
+  const items = useMemo(() => rows.map(rowToItem), [rows]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
         <h3 className="font-semibold text-base">Critical Issues & Updates</h3>
         <p className="text-xs text-muted-foreground mt-0.5">Recent activity requiring attention</p>
       </div>
+
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-2">
-          {mockUpdates.map((update) => (
-            <div
-              key={update.id}
-              className={`p-3 rounded-lg border-l-4 transition-colors hover:bg-muted/50 cursor-pointer ${getAccentColor(update.type)}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">{getIcon(update.type)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-sm truncate">{update.title}</p>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{update.time}</span>
+          {loading ? (
+            <div className="p-3 rounded-lg border flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading updates…
+            </div>
+          ) : error ? (
+            <div className="p-3 rounded-lg border text-sm text-muted-foreground">
+              {error}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="p-3 rounded-lg border text-sm text-muted-foreground">
+              No updates yet.
+            </div>
+          ) : (
+            items.map((update) => (
+              <div
+                key={update.id}
+                className={`p-3 rounded-lg border-l-4 transition-colors hover:bg-muted/50 cursor-pointer ${getAccentColor(
+                  update.type
+                )}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">{getIcon(update.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-sm truncate">{update.title}</p>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{update.time}</span>
+                    </div>
+                    {!!update.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{update.description}</p>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{update.description}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </ScrollArea>
+
       <div className="p-3 border-t">
         <Link href="/app/activity">
           <Button variant="ghost" className="w-full justify-between text-sm group hover:text-white">
