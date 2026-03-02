@@ -134,13 +134,13 @@ export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b">
-        <h3 className="font-semibold text-base">Critical Issues & Updates</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Recent activity requiring attention</p>
+      <div className="px-6 py-4 border-b">
+        <h3 className="font-semibold text-base">Updates</h3>
+        <p className="text-xs text-muted-foreground mt-1">Recent activity requiring attention</p>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
+        <div className="px-6 py-4 space-y-3">
           {loading ? (
             <div className="p-3 rounded-lg border flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -180,7 +180,7 @@ export function CriticalUpdates({ companyId }: CriticalUpdatesProps) {
         </div>
       </ScrollArea>
 
-      <div className="p-3 border-t">
+      <div className="px-6 py-3 border-t">
         <Link href="/app/activity">
           <Button variant="ghost" className="w-full justify-between text-sm group hover:text-white">
             View all activity
