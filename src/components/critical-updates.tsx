@@ -29,6 +29,8 @@ type UpdateRow = {
   message?: string | null;
   description?: string | null;
   body?: string | null;
+  update_title?: string | null;
+  update_text?: string | null;
 };
 
 const getIcon = (type: UpdateItem['type']) => {
@@ -83,11 +85,16 @@ function timeAgo(iso?: string | null) {
 }
 
 function rowToItem(u: UpdateRow): UpdateItem {
+  const fallbackText = u.update_text?.trim() ?? '';
+  const rawTitle = (u.update_title ?? u.title ?? u.message ?? '').trim();
+  const title = !rawTitle || rawTitle.toLowerCase() === 'update' ? (fallbackText || 'Update') : rawTitle;
+  const description = u.update_text ?? u.description ?? u.body ?? '';
+
   return {
     id: u.id,
     type: normalizeType(u),
-    title: u.title ?? u.message ?? 'Update',
-    description: u.description ?? u.body ?? '',
+    title,
+    description: description === title ? '' : description,
     time: timeAgo(u.created_at),
   };
 }
@@ -126,7 +133,7 @@ export function CriticalUpdates() {
     };
   }, []);
 
-  const items = useMemo(() => rows.map(rowToItem), [rows]);
+  const items = useMemo(() => rows.slice(0, 5).map(rowToItem), [rows]);
 
   return (
     <div className="flex flex-col h-full">

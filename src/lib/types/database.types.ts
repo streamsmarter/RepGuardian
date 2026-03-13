@@ -138,23 +138,62 @@ export interface Database {
         Row: {
           id: string
           name: string
-          user_id: string
+          user_id: string | null
           created_at: string
           updated_at: string | null
+          conflict_resolution_prompt: string | null
+          twilio_auth_token: string | null
+          twilio_sid_key: string | null
+          review_link: string | null
+          phone_number: string
+          crm_type: string
+          business_id: string | null
+          reputation_score: Json | null
+          reviews_analysis: Json | null
+          placeIds: string[] | null
+          booking_link: string | null
+          points_to_usd: number | null
+          twilio_messaging_service_sid: string | null
         }
         Insert: {
           id?: string
           name: string
-          user_id: string
+          user_id?: string | null
           created_at?: string
           updated_at?: string | null
+          conflict_resolution_prompt?: string | null
+          twilio_auth_token?: string | null
+          twilio_sid_key?: string | null
+          review_link?: string | null
+          phone_number?: string
+          crm_type: string
+          business_id?: string | null
+          reputation_score?: Json | null
+          reviews_analysis?: Json | null
+          placeIds?: string[] | null
+          booking_link?: string | null
+          points_to_usd?: number | null
+          twilio_messaging_service_sid?: string | null
         }
         Update: {
           id?: string
           name?: string
-          user_id?: string
+          user_id?: string | null
           created_at?: string
           updated_at?: string | null
+          conflict_resolution_prompt?: string | null
+          twilio_auth_token?: string | null
+          twilio_sid_key?: string | null
+          review_link?: string | null
+          phone_number?: string
+          crm_type?: string
+          business_id?: string | null
+          reputation_score?: Json | null
+          reviews_analysis?: Json | null
+          placeIds?: string[] | null
+          booking_link?: string | null
+          points_to_usd?: number | null
+          twilio_messaging_service_sid?: string | null
         }
       }
       conflict: {
@@ -387,6 +426,53 @@ export interface Database {
           price?: number | null
           created_at?: string
           updated_at?: string | null
+        }
+      }
+      link: {
+        Row: {
+          id: string
+          created_at: string
+          link: string | null
+          type: string | null
+          company_id: string | null
+          client_id: string | null
+          sms_sid: string | null
+          metadata: Json | null
+          receiver_phone_number: string | null
+          source_object: string | null
+          click_count: number | null
+          last_clicked: string | null
+          refcode: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          link?: string | null
+          type?: string | null
+          company_id?: string | null
+          client_id?: string | null
+          sms_sid?: string | null
+          metadata?: Json | null
+          receiver_phone_number?: string | null
+          source_object?: string | null
+          click_count?: number | null
+          last_clicked?: string | null
+          refcode?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          link?: string | null
+          type?: string | null
+          company_id?: string | null
+          client_id?: string | null
+          sms_sid?: string | null
+          metadata?: Json | null
+          receiver_phone_number?: string | null
+          source_object?: string | null
+          click_count?: number | null
+          last_clicked?: string | null
+          refcode?: string | null
         }
       }
     }
