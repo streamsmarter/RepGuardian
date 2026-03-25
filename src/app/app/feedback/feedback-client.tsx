@@ -64,7 +64,7 @@ interface Feedback {
 
 export function FeedbackPageClient({
   companyId,
-  initialSentiment,
+  initialSentiment: _initialSentiment,
   initialSearch,
 }: FeedbackPageClientProps) {
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
@@ -92,6 +92,7 @@ export function FeedbackPageClient({
       if (error) throw error;
 
       const feedbackWithConflicts = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (data || []).map(async (feedback: any) => {
           const { data: conflicts } = await supabase
             .from('conflict')
@@ -100,10 +101,10 @@ export function FeedbackPageClient({
             .eq('company_id', companyId);
 
           const hasActiveConflict = conflicts?.some(
-            (conflict: any) => conflict.status === 'active'
+            (conflict: { status: string }) => conflict.status === 'active'
           );
           const hasResolvedConflict = conflicts?.some(
-            (conflict: any) => conflict.status === 'closed'
+            (conflict: { status: string }) => conflict.status === 'closed'
           );
 
           return {

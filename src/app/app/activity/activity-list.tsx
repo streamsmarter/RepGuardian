@@ -118,6 +118,7 @@ export function ActivityList({ companyId }: ActivityListProps) {
 
   const mappedUpdates: UpdateItem[] = useMemo(() => {
     if (!updates) return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return updates.map((item: any) => ({
       id: item.id,
       type: normalizeType(item.update_color),

@@ -51,8 +51,8 @@ export default function ReferralsPage() {
   const { data: programs, isLoading: programsLoading } = useQuery({
     queryKey: ['referral-programs'],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from('referral_program') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.from('referral_program') as any)
         .select('id, name, description, status, created_at, company_id')
         .eq('status', 'active')
         .order('created_at', { ascending: false });

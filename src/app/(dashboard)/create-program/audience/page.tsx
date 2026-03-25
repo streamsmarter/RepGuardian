@@ -13,7 +13,7 @@ import { SMSPreview } from '@/components/dashboard/sms-preview';
 
 export default function AudiencePage() {
   const router = useRouter();
-  const { data } = useProgramWizard();
+  const { data: _data } = useProgramWizard();
 
   const handleNext = () => {
     router.push('/create-program/review');

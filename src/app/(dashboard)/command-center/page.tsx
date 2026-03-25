@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { HeroScoreCard } from '@/components/dashboard/hero-score-card';
 import { ReviewsTrendCard } from '@/components/dashboard/reviews-trend-card';
 import { StatCard, AutopilotCard } from '@/components/dashboard/stat-card';

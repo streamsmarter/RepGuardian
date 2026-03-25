@@ -65,8 +65,8 @@ export function ReviewsPageClient({
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['reviews-page', companyId],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from('review') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.from('review') as any)
         .select('id, reviewer_name, stars, body, response_body, review_published_at, source, review_url')
         .eq('company_id', companyId)
         .order('review_published_at', { ascending: false });
