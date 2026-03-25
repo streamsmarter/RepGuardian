@@ -98,13 +98,13 @@ export function ActivityList({ companyId }: ActivityListProps) {
       if (!updates || updates.length === 0) return;
       
       const unreadIds = updates
-        .filter((update: any) => update.read_status === false)
-        .map((update: any) => update.id);
+        .filter((update: { read_status: boolean; id: string }) => update.read_status === false)
+        .map((update: { id: string }) => update.id);
       
       if (unreadIds.length === 0) return;
 
-      const { error } = await (supabase
-        .from('update') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('update') as any)
         .update({ read_status: true })
         .in('id', unreadIds);
 

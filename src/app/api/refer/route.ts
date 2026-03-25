@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createServerComponentClient();
 
     // Look up the link by refcode using RPC function (bypasses RLS)
-    const { data: rpcData, error: rpcError } = await (supabase
-      .rpc as any)('get_link_by_refcode', { ref_code: validatedRefcode });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)('get_link_by_refcode', { ref_code: validatedRefcode });
 
     if (rpcError) {
       console.error('Error fetching link:', rpcError);

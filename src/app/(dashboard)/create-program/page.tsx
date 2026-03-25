@@ -36,7 +36,7 @@ const programTypes: { value: ProgramType; label: string; available: boolean }[] 
 
 export default function CreateProgramPage() {
   const router = useRouter();
-  const { data, updateIdentity, setClientCount, isStepValid } = useProgramWizard();
+  const { data, updateIdentity, setClientCount } = useProgramWizard();
   const supabase = createBrowserComponentClient();
 
   // Fetch client count for the current company

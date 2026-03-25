@@ -32,8 +32,8 @@ export function SMSPreview() {
             </span>
             <div className="bg-[#262626] p-3 rounded-2xl rounded-tl-sm max-w-[85%]">
               <p className="text-xs leading-relaxed text-foreground">
-                Hi {'{customer_name}'}! We saw your recent order. Because you're a top customer,
-                we'd love for you to join our referral program. Refer a friend and you both get 20%
+                Hi {'{customer_name}'}! We saw your recent order. Because you&apos;re a top customer,
+                we&apos;d love for you to join our referral program. Refer a friend and you both get 20%
                 off! Link: sentnl.ai/referral
               </p>
             </div>

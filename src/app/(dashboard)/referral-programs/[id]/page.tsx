@@ -12,7 +12,7 @@ interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function CampaignDetailPage({ params }: CampaignDetailPageProps) {
+export default function CampaignDetailPage({ params: _params }: CampaignDetailPageProps) {
   return (
     <div className="px-8 py-8">
           {/* Header Section */}

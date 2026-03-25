@@ -61,8 +61,8 @@ export default function ReferralProgramsPage() {
 
       if (!appUser?.company_id) return [];
 
-      const { data: programs } = await (supabase
-        .from('referral_program') as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: programs } = await (supabase.from('referral_program') as any)
         .select('id, name, description, status, created_at')
         .eq('company_id', appUser.company_id)
         .eq('status', 'active')
