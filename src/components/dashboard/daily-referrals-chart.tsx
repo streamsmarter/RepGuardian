@@ -4,20 +4,20 @@ import { TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const chartBars = [
-  { height: 'h-3/4', highlight: false },
-  { height: 'h-2/3', highlight: false },
-  { height: 'h-1/2', highlight: false },
-  { height: 'h-4/5', highlight: true },
-  { height: 'h-3/5', highlight: false },
-  { height: 'h-2/3', highlight: false },
-  { height: 'h-full', highlight: true },
-  { height: 'h-4/5', highlight: false },
-  { height: 'h-3/4', highlight: false },
-  { height: 'h-2/3', highlight: false },
-  { height: 'h-1/2', highlight: false },
-  { height: 'h-4/5', highlight: true },
-  { height: 'h-3/5', highlight: false },
-  { height: 'h-2/3', highlight: false },
+  { height: 'h-3/4', highlight: false, value: 45 },
+  { height: 'h-2/3', highlight: false, value: 38 },
+  { height: 'h-1/2', highlight: false, value: 28 },
+  { height: 'h-4/5', highlight: true, value: 52 },
+  { height: 'h-3/5', highlight: false, value: 35 },
+  { height: 'h-2/3', highlight: false, value: 40 },
+  { height: 'h-full', highlight: true, value: 67 },
+  { height: 'h-4/5', highlight: false, value: 55 },
+  { height: 'h-3/4', highlight: false, value: 48 },
+  { height: 'h-2/3', highlight: false, value: 42 },
+  { height: 'h-1/2', highlight: false, value: 30 },
+  { height: 'h-4/5', highlight: true, value: 58 },
+  { height: 'h-3/5', highlight: false, value: 37 },
+  { height: 'h-2/3', highlight: false, value: 44 },
 ];
 
 export function DailyReferralsChart() {
@@ -64,7 +64,7 @@ export function DailyReferralsChart() {
             )}
           >
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-[#262626] px-2 py-1 rounded text-[10px] font-bold border border-[#484847]/20">
-              {Math.floor(Math.random() * 50) + 20}
+              {bar.value}
             </div>
           </div>
         ))}

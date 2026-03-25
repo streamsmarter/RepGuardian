@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -46,6 +47,29 @@ function dayKeyLocal(d: Date) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+// Group daily counts into periods (e.g., 3-day averages)
+function groupByPeriod(counts: number[], periodSize: number): number[] {
+  const result: number[] = [];
+  for (let i = 0; i < counts.length; i += periodSize) {
+    const slice = counts.slice(i, i + periodSize);
+    const sum = slice.reduce((a, b) => a + b, 0);
+    result.push(sum);
+  }
+  return result;
+}
+
+// Generate 4 evenly spaced labels from the date range
+function generateLabels(entries: [string, number][]) {
+  if (entries.length === 0) return ['', '', '', ''];
+  const step = Math.max(1, Math.floor(entries.length / 4));
+  const indices = [0, step, step * 2, entries.length - 1];
+  return indices.map((i) => {
+    const dateStr = entries[Math.min(i, entries.length - 1)][0];
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
 }
 
 export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
@@ -122,29 +146,6 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
 
     return { periodCounts, maxCount, labels: generateLabels(entries) };
   }, [reviewData, timeRange]);
-
-  // Group daily counts into periods (e.g., 3-day averages)
-  function groupByPeriod(counts: number[], periodSize: number): number[] {
-    const result: number[] = [];
-    for (let i = 0; i < counts.length; i += periodSize) {
-      const slice = counts.slice(i, i + periodSize);
-      const sum = slice.reduce((a, b) => a + b, 0);
-      result.push(sum);
-    }
-    return result;
-  }
-
-  // Generate 4 evenly spaced labels from the date range
-  function generateLabels(entries: [string, number][]) {
-    if (entries.length === 0) return ['', '', '', ''];
-    const step = Math.max(1, Math.floor(entries.length / 4));
-    const indices = [0, step, step * 2, entries.length - 1];
-    return indices.map((i) => {
-      const dateStr = entries[Math.min(i, entries.length - 1)][0];
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-  }
 
   // Current month review count
   const currentMonthCount = useMemo(() => {
