@@ -20,8 +20,8 @@ export function SentinelInsightCard() {
 
       {/* Content */}
       <p className="text-sm text-foreground mb-4 leading-relaxed">
-        "Programs with clear reward structures and fast payout cycles consistently drive{' '}
-        <strong>higher referral activation</strong> and repeat engagement."
+        &quot;Programs with clear reward structures and fast payout cycles consistently drive{' '}
+        <strong>higher referral activation</strong> and repeat engagement.&quot;
       </p>
 
       {/* Status */}

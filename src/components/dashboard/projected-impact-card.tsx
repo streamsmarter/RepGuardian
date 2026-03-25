@@ -63,9 +63,9 @@ export function ProjectedImpactCard() {
             Sentiment Engine Prediction
           </p>
           <div className="p-4 bg-black/50 rounded-lg text-xs leading-relaxed text-muted-foreground italic">
-            "Campaign structure aligns with current power-user behavior. Probability of achieving
+            &quot;Campaign structure aligns with current power-user behavior. Probability of achieving
             500+ referrals in month 1 is{' '}
-            <span className="text-primary font-bold">High (84%)</span>."
+            <span className="text-primary font-bold">High (84%)</span>.&quot;
           </div>
         </div>
       </div>

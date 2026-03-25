@@ -145,7 +145,7 @@ function ReferForm() {
               </span>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
-              You've been invited
+              You&apos;ve been invited
             </h1>
             <p className="text-[#adaaaa] text-base leading-relaxed max-w-[320px] mx-auto">
               Enter your phone number to activate your{' '}

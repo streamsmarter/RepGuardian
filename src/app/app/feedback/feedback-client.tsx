@@ -200,7 +200,7 @@ export function FeedbackPageClient({
 
   // Filter and sort feedback based on filters
   const filteredFeedback = useMemo(() => {
-    let result = feedbackData?.filter((feedback) => {
+    const result = feedbackData?.filter((feedback) => {
       // Keyword filter
       if (keywordFilter && !feedback.feedback_message?.toLowerCase().includes(keywordFilter.toLowerCase())) {
         return false;
@@ -631,7 +631,7 @@ export function FeedbackPageClient({
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs text-white/80 max-w-xs truncate">
-                        "{feedback.feedback_message}"
+                        &quot;{feedback.feedback_message}&quot;
                       </td>
                       <td className="px-6 py-4">
                         <span

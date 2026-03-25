@@ -470,7 +470,7 @@ export function ReviewsPageClient({
                       <span className="text-xs text-[#adaaaa]/50 font-mono">{formatTimeAgo(review.review_published_at)}</span>
                     </div>
                     <p className="text-sm text-white font-medium leading-tight line-clamp-2">
-                      "{review.body?.slice(0, 80)}..."
+                      &quot;{review.body?.slice(0, 80)}...&quot;
                     </p>
                   </div>
                 ))
