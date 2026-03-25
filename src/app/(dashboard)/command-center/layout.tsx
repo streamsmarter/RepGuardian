@@ -3,7 +3,7 @@
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { DashboardTopbar } from '@/components/dashboard/dashboard-topbar';
 
-export default function AppLayout({
+export default function CommandCenterLayout({
   children,
 }: {
   children: React.ReactNode;

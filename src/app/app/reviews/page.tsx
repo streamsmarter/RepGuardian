@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { getCompanyContext } from '@/lib/company-context';
 import { createServerComponentClient } from '@/lib/supabase/server';
-import { FeedbackPageClient } from './feedback-client';
+import { ReviewsPageClient } from './reviews-client';
 
 type ReviewsAnalysis = {
   strengths: Record<string, number>;
@@ -25,22 +25,23 @@ async function getReviewsAnalysis(companyId: string): Promise<ReviewsAnalysis | 
   return analysis;
 }
 
-export default async function FeedbackPage({
+export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams: { sentiment?: string; search?: string };
+  searchParams: Promise<{ platform?: string; sentiment?: string; rating?: string; search?: string }>;
 }) {
   const { company_id } = await getCompanyContext();
-  const sentiment = searchParams.sentiment || 'all';
-  const search = searchParams.search || '';
   const reviewsAnalysis = await getReviewsAnalysis(company_id);
+  const params = await searchParams;
 
   return (
-    <FeedbackPageClient
+    <ReviewsPageClient
       companyId={company_id}
-      initialSentiment={sentiment}
-      initialSearch={search}
       reviewsAnalysis={reviewsAnalysis}
+      initialPlatform={params.platform || 'all'}
+      initialSentiment={params.sentiment || 'all'}
+      initialRating={params.rating || 'all'}
+      initialSearch={params.search || ''}
     />
   );
 }

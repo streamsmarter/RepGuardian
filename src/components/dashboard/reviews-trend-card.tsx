@@ -1,0 +1,276 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { createBrowserComponentClient } from '@/lib/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+
+interface ReviewsTrendCardProps {
+  companyId: string;
+}
+
+type ReviewRow = {
+  review_published_at: string | null;
+};
+
+type TimeRange = 'all' | '90d' | '60d' | '30d';
+
+const timeRangeLabels: Record<TimeRange, string> = {
+  all: 'All Time',
+  '90d': '90 Days',
+  '60d': '60 Days',
+  '30d': '30 Days',
+};
+
+// Helper functions for date handling
+function startOfDayLocal(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function addDaysLocal(d: Date, days: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
+
+function dayKeyLocal(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
+  const supabase = createBrowserComponentClient();
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+
+  const { data: reviewData, isLoading } = useQuery({
+    queryKey: ['command-center-reviews', companyId],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('review') as any)
+        .select('review_published_at')
+        .eq('company_id', companyId)
+        .not('review_published_at', 'is', null)
+        .order('review_published_at', { ascending: true });
+
+      if (error) throw error;
+      return (data ?? []) as ReviewRow[];
+    },
+    staleTime: 30_000,
+  });
+
+  // Process data for chart - group by 3-day periods for smoother visualization
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const end = startOfDayLocal(now);
+    let start: Date;
+
+    if (timeRange === 'all') {
+      // Find earliest review date
+      let earliestTimestamp: number | null = null;
+      for (const row of reviewData ?? []) {
+        if (!row.review_published_at) continue;
+        const dt = new Date(row.review_published_at);
+        if (Number.isNaN(dt.getTime())) continue;
+        const dayTimestamp = startOfDayLocal(dt).getTime();
+        earliestTimestamp = earliestTimestamp === null ? dayTimestamp : Math.min(earliestTimestamp, dayTimestamp);
+      }
+      start = earliestTimestamp !== null ? new Date(earliestTimestamp) : startOfDayLocal(addDaysLocal(end, -89));
+    } else {
+      const daysToSubtract = timeRange === '30d' ? 30 : timeRange === '60d' ? 60 : 90;
+      start = startOfDayLocal(addDaysLocal(end, -(daysToSubtract - 1)));
+    }
+
+    const rangeEndExclusive = addDaysLocal(end, 1);
+
+    // Build full day range with zeros
+    const dailyCounts: Record<string, number> = {};
+    for (let d = new Date(start); d <= end; d = addDaysLocal(d, 1)) {
+      dailyCounts[dayKeyLocal(d)] = 0;
+    }
+
+    if (!reviewData || reviewData.length === 0) {
+      const entries = Object.entries(dailyCounts);
+      const grouped = groupByPeriod(entries.map(([, count]) => count), 3);
+      return { periodCounts: grouped, maxCount: 0, labels: generateLabels(entries) };
+    }
+
+    // Count reviews per day
+    for (const row of reviewData) {
+      if (!row.review_published_at) continue;
+      const dt = new Date(row.review_published_at);
+      if (Number.isNaN(dt.getTime())) continue;
+      if (dt < start || dt >= rangeEndExclusive) continue;
+      const key = dayKeyLocal(dt);
+      if (key in dailyCounts) dailyCounts[key] += 1;
+    }
+
+    const entries = Object.entries(dailyCounts);
+    const counts = entries.map(([, count]) => count);
+    
+    // Group into 3-day periods for smoother chart
+    const periodCounts = groupByPeriod(counts, 3);
+    const maxCount = Math.max(...periodCounts, 1);
+
+    return { periodCounts, maxCount, labels: generateLabels(entries) };
+  }, [reviewData, timeRange]);
+
+  // Group daily counts into periods (e.g., 3-day averages)
+  function groupByPeriod(counts: number[], periodSize: number): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < counts.length; i += periodSize) {
+      const slice = counts.slice(i, i + periodSize);
+      const sum = slice.reduce((a, b) => a + b, 0);
+      result.push(sum);
+    }
+    return result;
+  }
+
+  // Generate 4 evenly spaced labels from the date range
+  function generateLabels(entries: [string, number][]) {
+    if (entries.length === 0) return ['', '', '', ''];
+    const step = Math.max(1, Math.floor(entries.length / 4));
+    const indices = [0, step, step * 2, entries.length - 1];
+    return indices.map((i) => {
+      const dateStr = entries[Math.min(i, entries.length - 1)][0];
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+  }
+
+  // Current month review count
+  const currentMonthCount = useMemo(() => {
+    if (!reviewData) return 0;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return reviewData.filter((row) => {
+      if (!row.review_published_at) return false;
+      return new Date(row.review_published_at) >= monthStart;
+    }).length;
+  }, [reviewData]);
+
+  return (
+    <div className="col-span-12 lg:col-span-7 bg-[#1a1919] rounded-2xl p-8 flex flex-col">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h3 className="text-lg font-bold">Reviews Trend</h3>
+          <p className="text-muted-foreground text-xs">
+            Performance trajectory over {timeRange === 'all' ? 'all time' : `the last ${timeRangeLabels[timeRange].toLowerCase()}`}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-primary">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            <span>{currentMonthCount} this month</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 bg-[#201f1f] rounded text-muted-foreground hover:text-primary transition-all text-xs font-medium gap-1"
+              >
+                {timeRangeLabels[timeRange]}
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1919] border-white/10">
+              <DropdownMenuItem onClick={() => setTimeRange('all')} className="text-xs cursor-pointer">
+                All Time
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('90d')} className="text-xs cursor-pointer">
+                90 Days
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('60d')} className="text-xs cursor-pointer">
+                60 Days
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeRange('30d')} className="text-xs cursor-pointer">
+                30 Days
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full min-h-[200px] flex items-end justify-between gap-2 relative">
+        {isLoading ? (
+          <Skeleton className="absolute inset-0 rounded-lg" />
+        ) : (
+          <>
+            {/* Chart Grid Lines */}
+            <div className="absolute inset-0 flex flex-col justify-between opacity-5">
+              <div className="w-full border-t border-white" />
+              <div className="w-full border-t border-white" />
+              <div className="w-full border-t border-white" />
+              <div className="w-full border-t border-white" />
+            </div>
+
+            {/* SVG Chart - Line chart with 3-day period data points */}
+            <svg
+              className="absolute inset-0 w-full h-full"
+              viewBox={`0 0 ${Math.max(chartData.periodCounts.length - 1, 1)} 40`}
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#69f6b8" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#69f6b8" stopOpacity="0" />
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="0.3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              {chartData.periodCounts.length > 0 && chartData.maxCount > 0 && (
+                <>
+                  {/* Line path */}
+                  <path
+                    d={chartData.periodCounts.map((count, i) => {
+                      const x = i;
+                      const y = 38 - (count / chartData.maxCount) * 35;
+                      return `${i === 0 ? 'M' : 'L'}${x} ${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#69f6b8"
+                    strokeWidth="0.15"
+                    filter="url(#glow)"
+                  />
+                  {/* Fill area */}
+                  <path
+                    d={`${chartData.periodCounts.map((count, i) => {
+                      const x = i;
+                      const y = 38 - (count / chartData.maxCount) * 35;
+                      return `${i === 0 ? 'M' : 'L'}${x} ${y}`;
+                    }).join(' ')} L${chartData.periodCounts.length - 1} 40 L0 40 Z`}
+                    fill="url(#chartFill)"
+                  />
+                </>
+              )}
+            </svg>
+
+            {/* Chart Labels */}
+            <div className="absolute bottom-[-24px] w-full flex justify-between px-2 text-[9px] text-muted-foreground/40 uppercase tracking-widest">
+              {chartData.labels.map((label, i) => (
+                <span key={i}>{label}</span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

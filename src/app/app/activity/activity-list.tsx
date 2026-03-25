@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { AlertTriangle, Bell, CheckCircle2, Clock, Filter, RefreshCcw, Search } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sparkles, Star, Frown, Filter, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,22 +12,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { cn } from '@/lib/utils';
 
 interface UpdateItem {
   id: string;
-  type: 'critical' | 'warning' | 'info' | 'success';
+  type: 'ai_response' | 'new_review' | 'low_sentiment';
   title: string;
   description: string;
-  time: string;
+  timestamp: string;
   date: string;
 }
 
@@ -37,23 +27,17 @@ interface ActivityListProps {
   companyId: string;
 }
 
-const mapColorToType = (color: string | null): UpdateItem['type'] => {
-  switch (color?.toLowerCase()) {
-    case 'red':
-    case 'critical':
-      return 'critical';
-    case 'amber':
-    case 'yellow':
-    case 'warning':
-      return 'warning';
-    case 'green':
-    case 'success':
-      return 'success';
-    case 'blue':
-    case 'info':
-    default:
-      return 'info';
-  }
+const iconMap = {
+  ai_response: { icon: Sparkles, bgColor: 'bg-primary/10', iconColor: 'text-primary' },
+  new_review: { icon: Star, bgColor: 'bg-secondary/10', iconColor: 'text-secondary' },
+  low_sentiment: { icon: Frown, bgColor: 'bg-destructive/10', iconColor: 'text-destructive' },
+};
+
+const normalizeType = (color: string | null): UpdateItem['type'] => {
+  const s = (color ?? '').toLowerCase();
+  if (s.includes('ai') || s.includes('auto') || s.includes('response') || s.includes('green') || s.includes('success')) return 'ai_response';
+  if (s.includes('red') || s.includes('critical') || s.includes('negative') || s.includes('conflict') || s.includes('warning') || s.includes('attention')) return 'low_sentiment';
+  return 'new_review';
 };
 
 const formatRelativeTime = (dateString: string): string => {
@@ -65,10 +49,9 @@ const formatRelativeTime = (dateString: string): string => {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays === 1) return 'Yesterday';
-  return `${diffDays} days ago`;
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
 };
 
 const formatDateGroup = (dateString: string): string => {
@@ -83,65 +66,17 @@ const formatDateGroup = (dateString: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const getIcon = (type: UpdateItem['type']) => {
-  switch (type) {
-    case 'critical':
-      return <AlertTriangle className="h-5 w-5 text-red-500" />;
-    case 'warning':
-      return <Clock className="h-5 w-5 text-amber-500" />;
-    case 'success':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
-    case 'info':
-      return <Bell className="h-5 w-5 text-blue-500" />;
-  }
-};
-
-const getAccentColor = (type: UpdateItem['type']) => {
-  switch (type) {
-    case 'critical':
-      return 'border-l-red-500 bg-red-500/5 hover:bg-red-500/10';
-    case 'warning':
-      return 'border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10';
-    case 'success':
-      return 'border-l-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10';
-    case 'info':
-      return 'border-l-blue-500 bg-blue-500/5 hover:bg-blue-500/10';
-  }
-};
-
-const getTypeBadge = (type: UpdateItem['type']) => {
-  const styles = {
-    critical: { bg: 'bg-red-500/10', border: 'border-red-500', text: 'text-red-500' },
-    warning: { bg: 'bg-amber-500/10', border: 'border-amber-500', text: 'text-amber-500' },
-    success: { bg: 'bg-emerald-500/10', border: 'border-emerald-500', text: 'text-emerald-500' },
-    info: { bg: 'bg-blue-500/10', border: 'border-blue-500', text: 'text-blue-500' },
-  };
-  const labels = {
-    critical: 'Critical',
-    warning: 'Warning',
-    success: 'Success',
-    info: 'Info',
-  };
-  const s = styles[type];
-  return (
-    <Badge className={`border ${s.bg} ${s.border} ${s.text}`}>
-      {labels[type]}
-    </Badge>
-  );
-};
-
 export function ActivityList({ companyId }: ActivityListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    critical: true,
-    warning: true,
-    success: true,
-    info: true,
+    ai_response: true,
+    new_review: true,
+    low_sentiment: true,
   });
   const supabase = createBrowserComponentClient();
   const queryClient = useQueryClient();
 
-  const { data: updates, isLoading, error: queryError } = useQuery({
+  const { data: updates, isLoading } = useQuery({
     queryKey: ['activity-updates', companyId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -158,7 +93,6 @@ export function ActivityList({ companyId }: ActivityListProps) {
     },
   });
 
-  // Mark all unread updates as read when the component mounts
   useEffect(() => {
     const markUpdatesAsRead = async () => {
       if (!updates || updates.length === 0) return;
@@ -174,10 +108,7 @@ export function ActivityList({ companyId }: ActivityListProps) {
         .update({ read_status: true })
         .in('id', unreadIds);
 
-      if (error) {
-        console.error('Error marking updates as read:', error);
-      } else {
-        // Invalidate navbar updates query to remove the notification dot
+      if (!error) {
         queryClient.invalidateQueries({ queryKey: ['navbar-updates'] });
       }
     };
@@ -189,10 +120,10 @@ export function ActivityList({ companyId }: ActivityListProps) {
     if (!updates) return [];
     return updates.map((item: any) => ({
       id: item.id,
-      type: mapColorToType(item.update_color),
+      type: normalizeType(item.update_color),
       title: item.update_title || 'Update',
       description: item.update_text || '',
-      time: formatRelativeTime(item.created_at),
+      timestamp: formatRelativeTime(item.created_at),
       date: formatDateGroup(item.created_at),
     }));
   }, [updates]);
@@ -217,14 +148,16 @@ export function ActivityList({ companyId }: ActivityListProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-[600px]">
-        <div className="p-4 border-b flex gap-3">
-          <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 w-10" />
+      <div className="bg-[#1a1919] rounded-2xl overflow-hidden">
+        <div className="px-8 py-6 border-b border-white/5 bg-[#201f1f]/30">
+          <div className="h-6 w-32 bg-white/5 rounded animate-pulse" />
         </div>
-        <div className="p-4 space-y-4">
+        <div className="divide-y divide-white/5">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-20 w-full" />
+            <div key={i} className="px-8 py-5 flex items-center gap-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Loading activity...</span>
+            </div>
           ))}
         </div>
       </div>
@@ -232,125 +165,104 @@ export function ActivityList({ companyId }: ActivityListProps) {
   }
 
   return (
-    <div className="flex flex-col h-[600px]">
-      {/* Search and Filter */}
-      <div className="p-4 border-b flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search activity..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+    <div className="bg-[#1a1919] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-[#201f1f]/30">
+        <h3 className="text-lg font-bold">All Activity</h3>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="pl-9 h-8 w-48 bg-[#201f1f] border-white/10 text-xs"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 px-3 bg-[#201f1f] rounded text-muted-foreground hover:text-primary transition-all text-xs font-medium gap-1">
+                <Filter className="h-3 w-3" />
+                Filter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1919] border-white/10">
+              <DropdownMenuCheckboxItem
+                checked={filters.ai_response}
+                onCheckedChange={(checked) => setFilters({ ...filters, ai_response: checked })}
+                className="text-xs cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  AI Response
+                </span>
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={filters.new_review}
+                onCheckedChange={(checked) => setFilters({ ...filters, new_review: checked })}
+                className="text-xs cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Star className="h-3 w-3 text-secondary" />
+                  New Review
+                </span>
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={filters.low_sentiment}
+                onCheckedChange={(checked) => setFilters({ ...filters, low_sentiment: checked })}
+                className="text-xs cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Frown className="h-3 w-3 text-destructive" />
+                  Low Sentiment
+                </span>
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuCheckboxItem
-              checked={filters.critical}
-              onCheckedChange={(checked) => setFilters({ ...filters, critical: checked })}
-            >
-              <span className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-                Critical
-              </span>
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.warning}
-              onCheckedChange={(checked) => setFilters({ ...filters, warning: checked })}
-            >
-              <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-amber-500" />
-                Warning
-              </span>
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.success}
-              onCheckedChange={(checked) => setFilters({ ...filters, success: checked })}
-            >
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                Success
-              </span>
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.info}
-              onCheckedChange={(checked) => setFilters({ ...filters, info: checked })}
-            >
-              <span className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-blue-500" />
-                Info
-              </span>
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
-          {Object.entries(groupedUpdates).map(([date, updates]) => (
-            <div key={date}>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">{date}</h3>
-              <div className="space-y-2">
-                {updates.map((update) => (
-                  <div
-                    key={update.id}
-                    className={`p-4 rounded-lg border-l-4 transition-colors cursor-pointer ${getAccentColor(update.type)}`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="mt-0.5">{getIcon(update.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-3 mb-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{update.title}</p>
-                            {getTypeBadge(update.type)}
-                          </div>
-                          <span className="text-sm text-muted-foreground whitespace-nowrap">{update.time}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{update.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {/* Activity Items */}
+      <div className="divide-y divide-white/5">
+        {Object.entries(groupedUpdates).map(([date, dateUpdates]) => (
+          <div key={date}>
+            <div className="px-8 py-3 bg-[#201f1f]/20">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{date}</span>
             </div>
-          ))}
-          {filteredUpdates.length === 0 && !searchQuery && (
-            <Empty className="bg-muted/30 py-12">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Bell />
-                </EmptyMedia>
-                <EmptyTitle>No Notifications</EmptyTitle>
-                <EmptyDescription className="max-w-xs text-pretty">
-                  You&apos;re all caught up. New notifications will appear here.
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.reload()}
-                  className="hover:!bg-[#10b981] hover:!text-white hover:!border-[#10b981]"
+            {dateUpdates.map((activity) => {
+              const { icon: Icon, bgColor, iconColor } = iconMap[activity.type];
+              return (
+                <div
+                  key={activity.id}
+                  className="px-8 py-5 flex items-start gap-4 hover:bg-[#201f1f] transition-colors"
                 >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
-              </EmptyContent>
-            </Empty>
-          )}
-          {filteredUpdates.length === 0 && searchQuery && (
-            <div className="text-center text-muted-foreground py-8">
-              No activity matches your search
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+                  <div className={cn('w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center', bgColor)}>
+                    <Icon className={cn('w-4 h-4', iconColor)} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <p className="text-sm font-semibold">{activity.title}</p>
+                      <span className="text-[10px] text-muted-foreground font-medium">{activity.timestamp}</span>
+                    </div>
+                    {activity.description && (
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{activity.description}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+        {filteredUpdates.length === 0 && (
+          <div className="px-8 py-12 text-center">
+            <Frown className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              {searchQuery ? 'No activity matches your search' : 'No activity yet'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

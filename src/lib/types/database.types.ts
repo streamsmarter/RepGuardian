@@ -347,56 +347,80 @@ export interface Database {
       reward: {
         Row: {
           id: string
-          company_id: string
-          client_id: string
-          points: number
           created_at: string
-          updated_at: string | null
+          amount: number | null
+          company_id: string
+          type: string
+          status: string
+          expires_in_days: number | null
+          applies_to_all_services: boolean
+          metadata: Json
+          name: string
+          description: string | null
+          minimum_completed_appointments: number | null
+          first_time_clients_only: boolean
+          min_lifetime_spend: number | null
+          min_clients_referred: number | null
+          max_issues_per_client: number | null
         }
         Insert: {
           id?: string
-          company_id: string
-          client_id: string
-          points: number
           created_at?: string
-          updated_at?: string | null
+          amount?: number | null
+          company_id: string
+          type?: string
+          status?: string
+          expires_in_days?: number | null
+          applies_to_all_services?: boolean
+          metadata: Json
+          name: string
+          description?: string | null
+          minimum_completed_appointments?: number | null
+          first_time_clients_only?: boolean
+          min_lifetime_spend?: number | null
+          min_clients_referred?: number | null
+          max_issues_per_client?: number | null
         }
         Update: {
           id?: string
-          company_id?: string
-          client_id?: string
-          points?: number
           created_at?: string
-          updated_at?: string | null
+          amount?: number | null
+          company_id?: string
+          type?: string
+          status?: string
+          expires_in_days?: number | null
+          applies_to_all_services?: boolean
+          metadata?: Json
+          name?: string
+          description?: string | null
+          minimum_completed_appointments?: number | null
+          first_time_clients_only?: boolean
+          min_lifetime_spend?: number | null
+          min_clients_referred?: number | null
+          max_issues_per_client?: number | null
         }
       }
       reward_service: {
         Row: {
           id: string
-          company_id: string
-          name: string
-          points_required: number
-          description: string | null
           created_at: string
-          updated_at: string | null
+          service_id: string
+          company_id: string
+          reward_id: string
         }
         Insert: {
           id?: string
-          company_id: string
-          name: string
-          points_required: number
-          description?: string | null
           created_at?: string
-          updated_at?: string | null
+          service_id: string
+          company_id: string
+          reward_id: string
         }
         Update: {
           id?: string
-          company_id?: string
-          name?: string
-          points_required?: number
-          description?: string | null
           created_at?: string
-          updated_at?: string | null
+          service_id?: string
+          company_id?: string
+          reward_id?: string
         }
       }
       service: {
@@ -473,6 +497,62 @@ export interface Database {
           click_count?: number | null
           last_clicked?: string | null
           refcode?: string | null
+        }
+      }
+      referral_program: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          company_id: string
+          name: string
+          description: string | null
+          status: string
+          referrer_reward_id: string
+          referred_reward_id: string
+          destination_url: string | null
+          attribution_window_days: number | null
+          requires_manual_approval: boolean | null
+          max_referrals_per_referrer: number | null
+          qualification_rules: Json | null
+          distribution_rules: Json | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          company_id: string
+          name: string
+          description?: string | null
+          status?: string
+          referrer_reward_id: string
+          referred_reward_id: string
+          destination_url?: string | null
+          attribution_window_days?: number | null
+          requires_manual_approval?: boolean | null
+          max_referrals_per_referrer?: number | null
+          qualification_rules?: Json | null
+          distribution_rules?: Json | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          company_id?: string
+          name?: string
+          description?: string | null
+          status?: string
+          referrer_reward_id?: string
+          referred_reward_id?: string
+          destination_url?: string | null
+          attribution_window_days?: number | null
+          requires_manual_approval?: boolean | null
+          max_referrals_per_referrer?: number | null
+          qualification_rules?: Json | null
+          distribution_rules?: Json | null
+          metadata?: Json | null
         }
       }
     }

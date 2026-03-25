@@ -86,19 +86,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send data to webhook (fire and forget, don't block the response)
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        phone_number: validatedPhone,
-        refcode: validatedRefcode,
-      }),
-    }).catch((err) => {
+    // Send data to webhook
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: validatedPhone,
+          refcode: validatedRefcode,
+        }),
+      });
+    } catch (err) {
       console.error('Webhook error:', err);
-    });
+    }
 
     return NextResponse.json({
       success: true,

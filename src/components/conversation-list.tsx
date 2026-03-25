@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { createBrowserComponentClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface ConversationListProps {
   companyId: string;
@@ -186,72 +184,102 @@ export function ConversationList({ companyId, selectedChatId, onSelectChat }: Co
     }
   };
 
+  const getNewCount = () => {
+    if (!conversations) return 0;
+    return conversations.filter((chat: any) => chat.status === "needs_attention").length;
+  };
+
   return (
     <>
-      <div className="p-4 border-b">
+      {/* Header */}
+      <div className="p-8 flex items-center justify-between">
+        <h1 className="text-xl font-extrabold tracking-tight">Active Threads</h1>
+        {getNewCount() > 0 && (
+          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">
+            {getNewCount()} NEW
+          </span>
+        )}
+      </div>
+
+      {/* Search - hidden for now, can be toggled */}
+      <div className="px-4 pb-4 hidden">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#777575]" />
+          <input
             type="text"
             placeholder="Search conversations..."
-            className="pl-8"
+            className="w-full bg-[#131313] text-white text-sm pl-10 pr-4 py-3 rounded-lg border-0 ring-1 ring-[#484847]/20 focus:ring-2 focus:ring-primary focus:outline-none transition-all placeholder:text-[#777575]/50"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
-      <ScrollArea className="flex-1">
+
+      {/* Conversation List */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar space-y-1 px-4">
         {isLoading ? (
-          <div className="space-y-4 p-4">
+          <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-3">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+              <div key={i} className="p-4 rounded-xl">
+                <div className="flex justify-between items-start mb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-12" />
                 </div>
+                <Skeleton className="h-3 w-full" />
               </div>
             ))}
           </div>
         ) : conversations && conversations.length > 0 ? (
-          <div className="divide-y">
-            {conversations.map((chat: any) => (
-              <div
-                key={chat.id}
-                className={`p-4 cursor-pointer hover:bg-muted/50 ${
-                  selectedChatId === chat.id ? "bg-muted" : ""
-                }`}
-                onClick={() => handleSelectConversation(chat.id)}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <div className="font-medium flex items-center">
-                    <span>{chat.client_name || `${chat.client?.first_name || ''} ${chat.client?.last_name || ''}`.trim() || 'Unknown'}</span>
-                    {/* Status Indicator */}
-                    <div 
-                      className="w-[9px] h-[9px] rounded-full flex-shrink-0 ml-[10px]"
-                      style={{ backgroundColor: getStatusIndicatorColor(chat.client?.status) }}
-                    />
+          <>
+            {conversations.map((chat: any) => {
+              const isSelected = selectedChatId === chat.id;
+              const needsAttention = chat.status === "needs_attention";
+              const isResolved = chat.status === "resolved";
+              
+              return (
+                <div
+                  key={chat.id}
+                  className={`p-4 rounded-xl cursor-pointer transition-all group ${
+                    isSelected 
+                      ? "bg-[#201f1f] border-l-2 border-primary" 
+                      : "hover:bg-[#201f1f]"
+                  } ${isResolved ? "opacity-60" : ""}`}
+                  onClick={() => handleSelectConversation(chat.id)}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className={`font-bold text-sm ${
+                      isSelected ? "text-primary" : "text-white group-hover:text-primary"
+                    } transition-colors`}>
+                      {chat.client_name || `${chat.client?.first_name || ''} ${chat.client?.last_name || ''}`.trim() || 'Unknown'}
+                    </span>
+                    <span className="text-[10px] text-[#adaaaa] uppercase tracking-wider">
+                      {chat.lastMessage
+                        ? formatDate(chat.lastMessage.created_at)
+                        : formatDate(chat.created_at)}
+                    </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {chat.lastMessage
-                      ? formatDate(chat.lastMessage.created_at)
-                      : formatDate(chat.created_at)}
-                  </div>
+                  <p className="text-xs text-[#adaaaa] line-clamp-1">
+                    {chat.lastMessage ? chat.lastMessage.message : "No messages yet"}
+                  </p>
+                  {needsAttention && (
+                    <div className="mt-3 flex space-x-2">
+                      <span className="px-2 py-0.5 bg-[#262626] text-[#8596ff] text-[9px] font-bold rounded-full uppercase tracking-tighter">
+                        SLA: Priority
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="text-sm text-muted-foreground line-clamp-1">
-                  {chat.lastMessage ? chat.lastMessage.message : "No messages yet"}
-                </div>
-              </div>
-            ))}
-          </div>
+              );
+            })}
+          </>
         ) : (
-          <div className="p-4 text-center text-muted-foreground">
+          <div className="p-4 text-center text-[#adaaaa]">
             {searchQuery
               ? "No conversations match your search"
               : "No conversations found"}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </>
   );
 }
