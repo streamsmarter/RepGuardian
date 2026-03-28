@@ -552,7 +552,7 @@ export function FeedbackPageClient({
                   <div className="flex items-center gap-1">
                     Date
                     <span className="text-[8px]">
-                      {sortColumn === 'date' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                      {sortColumn === 'date' ? (sortDirection === 'asc' ? 'ASC' : 'DESC') : 'SORT'}
                     </span>
                   </div>
                 </th>
@@ -563,7 +563,7 @@ export function FeedbackPageClient({
                   <div className="flex items-center gap-1">
                     Client
                     <span className="text-[8px]">
-                      {sortColumn === 'client' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                      {sortColumn === 'client' ? (sortDirection === 'asc' ? 'ASC' : 'DESC') : 'SORT'}
                     </span>
                   </div>
                 </th>
@@ -577,7 +577,7 @@ export function FeedbackPageClient({
                   <div className="flex items-center gap-1">
                     Sentiment
                     <span className="text-[8px]">
-                      {sortColumn === 'sentiment' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                      {sortColumn === 'sentiment' ? (sortDirection === 'asc' ? 'ASC' : 'DESC') : 'SORT'}
                     </span>
                   </div>
                 </th>
@@ -785,3 +785,4 @@ export function FeedbackPageClient({
     </section>
   );
 }
+

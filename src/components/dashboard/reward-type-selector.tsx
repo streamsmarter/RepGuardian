@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, CreditCard, Percent, Gift, LucideIcon } from 'lucide-react';
+import { Banknote, CreditCard, Percent, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RewardType } from '@/lib/program-wizard-context';
 
@@ -30,12 +30,6 @@ const rewardTypes: RewardTypeOption[] = [
     title: 'Percentage',
     description: 'Off next purchase',
   },
-  {
-    id: 'free_service',
-    icon: Gift,
-    title: 'Free Service',
-    description: 'Complimentary service',
-  },
 ];
 
 interface RewardTypeSelectorProps {
@@ -45,7 +39,7 @@ interface RewardTypeSelectorProps {
 
 export function RewardTypeSelector({ selectedType = 'cash', onSelect }: RewardTypeSelectorProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-3 gap-4">
       {rewardTypes.map((type) => {
         const Icon = type.icon;
         const isSelected = type.id === selectedType;

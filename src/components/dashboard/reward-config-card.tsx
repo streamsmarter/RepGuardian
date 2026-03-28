@@ -18,47 +18,35 @@ export function RewardConfigCard({
   progressPercentage = 66,
 }: RewardConfigCardProps) {
   return (
-    <div className="col-span-12 lg:col-span-4 bg-primary/5 border border-primary/10 rounded-xl p-8 flex flex-col justify-between overflow-hidden relative">
+    <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 overflow-hidden relative flex-1 flex items-center">
       {/* Background Glow */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
 
-      <div>
-        <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-6">
-          Reward Configuration
+      <div className="flex items-center justify-between gap-8 relative z-10 w-full">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-primary whitespace-nowrap">
+          Rewards
         </h3>
 
-        <div className="space-y-6">
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">
-              Referrer Reward
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest whitespace-nowrap">
+              Referrer
             </p>
-            <p className="text-3xl font-extrabold text-foreground">
+            <p className="text-xl font-extrabold text-foreground whitespace-nowrap">
               {referrerReward}{' '}
-              <span className="text-lg font-medium text-muted-foreground">{referrerRewardType}</span>
+              <span className="text-sm font-medium text-muted-foreground">{referrerRewardType}</span>
             </p>
           </div>
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">
-              Referred Bonus
+          <div className="w-px h-8 bg-primary/20" />
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest whitespace-nowrap">
+              Referred
             </p>
-            <p className="text-3xl font-extrabold text-foreground">
+            <p className="text-xl font-extrabold text-foreground whitespace-nowrap">
               {referredBonus}{' '}
-              <span className="text-lg font-medium text-muted-foreground">{referredBonusType}</span>
+              <span className="text-sm font-medium text-muted-foreground">{referredBonusType}</span>
             </p>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-primary/10">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Total Paid to Date</span>
-          <span className="text-foreground font-bold">{totalPaid}</span>
-        </div>
-        <div className="w-full h-1 bg-[#262626] rounded-full mt-2">
-          <div
-            className="h-full bg-primary rounded-full"
-            style={{ width: `${progressPercentage}%` }}
-          />
         </div>
       </div>
     </div>

@@ -196,7 +196,7 @@ export function ActivityList({ companyId }: ActivityListProps) {
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  AI Response
+                  Wins
                 </span>
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
