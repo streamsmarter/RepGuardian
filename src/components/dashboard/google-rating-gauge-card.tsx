@@ -10,7 +10,7 @@ interface GoogleRatingGaugeCardProps {
 const clampRating = (rating: number) => Math.max(0, Math.min(5, rating));
 
 export function GoogleRatingGaugeCard({ rating = 0, isLoading = false }: GoogleRatingGaugeCardProps) {
-  const normalizedRating = clampRating(rating);
+  const normalizedRating = clampRating(rating ?? 0);
   const circumference = 2 * Math.PI * 44;
   const progress = normalizedRating / 5;
   const strokeDashoffset = circumference - progress * circumference;

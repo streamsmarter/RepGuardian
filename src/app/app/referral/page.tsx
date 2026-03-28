@@ -162,7 +162,7 @@ export default function ReferralPage() {
   };
 
   // Format reward type for display
-  const formatRewardType = (type: string | undefined): string => {
+  const formatRewardType = (type: string | null | undefined): string => {
     if (!type) return 'Reward';
     switch (type) {
       case 'discount_percentage':

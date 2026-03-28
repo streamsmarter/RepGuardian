@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    let companyId = ownedCompany?.id ?? null;
+    let companyId = (ownedCompany as { id: string } | null)?.id ?? null;
 
     if (!companyId) {
       const { data: appUser } = await supabase
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      companyId = appUser?.company_id ?? null;
+      companyId = (appUser as { company_id: string } | null)?.company_id ?? null;
     }
 
     if (!companyId) {
