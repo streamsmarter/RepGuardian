@@ -67,10 +67,12 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
   // Instantly scroll to bottom when messages load (no animation)
   useEffect(() => {
     if (messages && messages.length > 0 && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        if (scrollAreaRef.current) {
+          scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        }
+      });
     }
   }, [messages, chatId]);
 
@@ -314,7 +316,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
                         : isRepresentative
                         ? "Representative"
                         : "Sentinel AI"
-                      } • {formatMessageTime(message.created_at)}
+                      } | {formatMessageTime(message.created_at)}
                     </span>
                   </div>
                 </div>
@@ -365,3 +367,4 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
     </div>
   );
 }
+

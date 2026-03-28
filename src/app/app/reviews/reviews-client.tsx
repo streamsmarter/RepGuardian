@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { 
   TrendingUp, 
@@ -12,16 +12,16 @@ import {
   Sparkles, 
   AlertTriangle,
   ChevronDown,
-  Filter,
-  Download,
-  Flag,
-  Share2,
   Clock,
   Zap,
-  ArrowDown
+  ArrowDown,
+  CheckCircle2,
+  Send,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { GoogleRatingGaugeCard } from '@/components/dashboard/google-rating-gauge-card';
+import { toast } from 'sonner';
 
 interface ReviewsAnalysis {
   strengths: Record<string, number>;
@@ -43,6 +43,7 @@ interface Review {
   stars: number | null;
   body: string | null;
   response_body: string | null;
+  response_date: string | null;
   review_published_at: string | null;
   source: string | null;
   review_url: string | null;
@@ -61,7 +62,12 @@ export function ReviewsPageClient({
   const [sentimentFilter, setSentimentFilter] = useState(initialSentiment);
   const [ratingFilter, setRatingFilter] = useState(initialRating);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [replyFilter, setReplyFilter] = useState('all');
+  const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
+  const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
+  const [manualReply, setManualReply] = useState('');
   const supabase = createBrowserComponentClient();
+  const queryClient = useQueryClient();
 
   // Fetch reviews data
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
@@ -69,7 +75,7 @@ export function ReviewsPageClient({
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.from('review') as any)
-        .select('id, reviewer_name, stars, body, response_body, review_published_at, source, review_url')
+        .select('id, reviewer_name, stars, body, response_body, response_date, review_published_at, source, review_url')
         .eq('company_id', companyId)
         .order('review_published_at', { ascending: false });
 
@@ -93,7 +99,18 @@ export function ReviewsPageClient({
     return { positive, neutral, frustrated, total: reviews.length };
   }, [reviews]);
 
-  const positivePercent = sentimentStats.total > 0 ? Math.round((sentimentStats.positive / sentimentStats.total) * 100) : 0;
+  const averageGoogleRating = useMemo(() => {
+    const googleReviews = reviews.filter(
+      (review) => review.stars !== null && (review.source || '').toLowerCase().includes('google')
+    );
+
+    if (googleReviews.length === 0) {
+      return 0;
+    }
+
+    const totalStars = googleReviews.reduce((sum, review) => sum + (review.stars || 0), 0);
+    return totalStars / googleReviews.length;
+  }, [reviews]);
 
   // Calculate review velocity (this month vs last month)
   const velocityStats = useMemo(() => {
@@ -185,15 +202,23 @@ export function ReviewsPageClient({
         if (ratingFilter === '3-' && stars > 3) return false;
       }
 
+      // Reply filter
+      if (replyFilter !== 'all') {
+        const hasReply = !!review.response_body?.trim();
+        if (replyFilter === 'replied' && !hasReply) return false;
+        if (replyFilter === 'unreplied' && hasReply) return false;
+      }
+
       return true;
     });
-  }, [reviews, keywordFilter, platformFilter, sentimentFilter, ratingFilter]);
+  }, [reviews, keywordFilter, platformFilter, sentimentFilter, ratingFilter, replyFilter]);
 
   const clearFilters = useCallback(() => {
     setKeywordFilter('');
     setPlatformFilter('all');
     setSentimentFilter('all');
     setRatingFilter('all');
+    setReplyFilter('all');
   }, []);
 
   const formatDate = (dateString: string | null) => {
@@ -223,6 +248,15 @@ export function ReviewsPageClient({
     return `${Math.floor(diffHours / 24)}d ago`;
   };
 
+  const formatResponseDate = (dateString: string | null) => {
+    if (!dateString) return 'Response date unavailable';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
   const getSentimentLabel = (stars: number | null) => {
     if (stars === null) return { label: 'Unknown', color: 'bg-[#777575]/10 text-[#777575] border-[#777575]/20' };
     if (stars >= 4) return { label: 'Positive', color: 'bg-primary/10 text-primary border-primary/20' };
@@ -248,26 +282,45 @@ export function ReviewsPageClient({
   const maxStrength = topStrengths.length > 0 ? topStrengths[0][1] : 1;
   const maxWeakness = topWeaknesses.length > 0 ? topWeaknesses[0][1] : 1;
 
-  // Calculate total strengths and weaknesses for the chart
-  const totalStrengths = useMemo(() => {
-    if (!reviewsAnalysis?.strengths) return 0;
-    return Object.values(reviewsAnalysis.strengths).reduce((sum, val) => sum + val, 0);
-  }, [reviewsAnalysis]);
+  const submitManualReplyMutation = useMutation({
+    mutationFn: async ({ reviewId, responseBody }: { reviewId: string; responseBody: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('review') as any)
+        .update({
+          response_body: responseBody.trim(),
+          response_date: new Date().toISOString(),
+        })
+        .eq('id', reviewId)
+        .eq('company_id', companyId);
 
-  const totalWeaknesses = useMemo(() => {
-    if (!reviewsAnalysis?.weaknesses) return 0;
-    return Object.values(reviewsAnalysis.weaknesses).reduce((sum, val) => sum + val, 0);
-  }, [reviewsAnalysis]);
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: (_data, variables) => {
+      toast.success('Reply saved');
+      setExpandedReviewId(variables.reviewId);
+      setReplyingReviewId(null);
+      setManualReply('');
+      queryClient.invalidateQueries({ queryKey: ['reviews-page', companyId] });
+    },
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit reply');
+    },
+  });
 
-  const sentimentTotal = totalStrengths + totalWeaknesses;
-  const strengthsPercent = sentimentTotal > 0 ? Math.round((totalStrengths / sentimentTotal) * 100) : 0;
+  const handleManualReplySubmit = (reviewId: string, event: React.FormEvent) => {
+    event.preventDefault();
+    if (!manualReply.trim()) return;
+    submitManualReplyMutation.mutate({ reviewId, responseBody: manualReply });
+  };
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       {/* Intelligence Command Dashboard */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[440px]">
+      <section>
         {/* Main Intelligence Panel */}
-        <div className="lg:col-span-8 bg-[#101111] rounded-xl relative overflow-hidden border border-[#2d3436] flex flex-col p-8"
+        <div className="bg-[#101111] rounded-xl relative overflow-hidden border border-[#2d3436] flex flex-col p-8"
           style={{
             backgroundImage: 'radial-gradient(circle, rgba(105, 246, 184, 0.05) 1px, transparent 1px)',
             backgroundSize: '20px 20px',
@@ -276,9 +329,9 @@ export function ReviewsPageClient({
           {/* Header */}
           <div className="flex justify-between items-start z-10 border-b border-white/5 pb-4">
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-widest uppercase">Intelligence Command</h2>
+              <h2 className="text-2xl font-bold text-white tracking-widest uppercase">Reviews Monitor</h2>
               <p className="text-xs text-[#adaaaa] uppercase tracking-[0.3em] font-medium opacity-60">
-                Sentinel Analytics Engine // Data Feed: Live
+                Statistical Pulse // Live Reputation Feed
               </p>
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -300,238 +353,97 @@ export function ReviewsPageClient({
           </div>
 
           {/* Data Visualization Layout */}
-          <div className="flex-1 grid grid-cols-12 gap-8 mt-8">
-            {/* Left: Sentiment Distribution - Strengths vs Weaknesses */}
-            <div className="col-span-4 flex flex-col justify-center border-r border-white/5 pr-8">
-              <h3 className="text-sm font-bold text-[#adaaaa] uppercase tracking-[0.15em] mb-6">Sentiment Mix</h3>
-              <div className="relative aspect-square w-full flex items-center justify-center">
-                {(() => {
-                  const circumference = 2 * Math.PI * 14;
-                  const strengthsLen = (strengthsPercent / 100) * circumference;
-                  const weaknessesPercent = 100 - strengthsPercent;
-                  const weaknessesLen = (weaknessesPercent / 100) * circumference;
-                  
-                  return (
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="14" fill="none" stroke="#201f1f" strokeWidth="4" />
-                      {/* Strengths (Green) */}
-                      <circle
-                        cx="18" cy="18" r="14" fill="none"
-                        stroke="#69f6b8"
-                        strokeWidth="4"
-                        strokeDasharray={`${strengthsLen} ${circumference}`}
-                        strokeDashoffset="0"
-                      />
-                      {/* Weaknesses (Red) */}
-                      <circle
-                        cx="18" cy="18" r="14" fill="none"
-                        stroke="#ff716c"
-                        strokeWidth="4"
-                        strokeDasharray={`${weaknessesLen} ${circumference}`}
-                        strokeDashoffset={`${-strengthsLen}`}
-                      />
-                    </svg>
-                  );
-                })()}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-3xl font-bold text-white font-mono">{strengthsPercent}%</p>
-                  <p className="text-xs text-primary uppercase font-bold tracking-widest">Positive</p>
-                </div>
-              </div>
-              <div className="mt-8 space-y-3">
-                <div className="flex justify-between items-center text-xs uppercase tracking-widest">
-                  <span className="flex items-center gap-2 font-bold text-[#adaaaa]">
-                    <span className="w-2 h-2 rounded-sm bg-primary" /> Strengths
-                  </span>
-                  <span className="text-white font-mono text-sm">{totalStrengths}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs uppercase tracking-widest">
-                  <span className="flex items-center gap-2 font-bold text-[#adaaaa]">
-                    <span className="w-2 h-2 rounded-sm bg-[#ff716c]" /> Weaknesses
-                  </span>
-                  <span className="text-white font-mono text-sm">{totalWeaknesses}</span>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-12 gap-8 mt-8">
+            <GoogleRatingGaugeCard rating={averageGoogleRating} isLoading={reviewsLoading} />
 
-            {/* Right: Tagged Intelligence (Strengths/Weaknesses) */}
-            <div className="col-span-8 space-y-8">
-              <div className="grid grid-cols-2 gap-8">
-                {/* Strengths */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-primary uppercase tracking-[0.15em] flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> Top Strengths
-                  </h3>
-                  <div className="space-y-4">
-                    {reviewsLoading ? (
-                      Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-8 w-full" />
-                      ))
-                    ) : topStrengths.length > 0 ? (
-                      topStrengths.map(([name, count]) => (
-                        <div key={name} className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                            <span className="text-white">{name}</span>
-                            <span className="text-primary font-mono">{count}</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary/40 border-r border-primary" 
-                              style={{ width: `${(count / maxStrength) * 100}%` }}
-                            />
-                          </div>
+            {/* Middle: Tagged Intelligence (Strengths/Weaknesses) */}
+            <div className="col-span-6 grid grid-cols-2 gap-6 items-center">
+              {/* Strengths */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-primary uppercase tracking-[0.15em] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Top Strengths
+                </h3>
+                <div className="space-y-3 max-h-[140px] overflow-hidden">
+                  {reviewsLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-6 w-full" />
+                    ))
+                  ) : topStrengths.length > 0 ? (
+                    topStrengths.map(([name, count]) => (
+                      <div key={name} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                          <span className="text-white truncate">{name}</span>
+                          <span className="text-primary font-mono">{count}</span>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-[#adaaaa]">No data available</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Weaknesses */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-[#ff716c] uppercase tracking-[0.15em] flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" /> Top Weaknesses
-                  </h3>
-                  <div className="space-y-4">
-                    {reviewsLoading ? (
-                      Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-8 w-full" />
-                      ))
-                    ) : topWeaknesses.length > 0 ? (
-                      topWeaknesses.map(([name, count]) => (
-                        <div key={name} className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                            <span className="text-white">{name}</span>
-                            <span className="text-[#ff716c] font-mono">{count}</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-[#ff716c]/40 border-r border-[#ff716c]" 
-                              style={{ width: `${(count / maxWeakness) * 100}%` }}
-                            />
-                          </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary/40 border-r border-primary" 
+                            style={{ width: `${(count / maxStrength) * 100}%` }}
+                          />
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-[#adaaaa]">No data available</p>
-                    )}
-                  </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-[#adaaaa]">No data available</p>
+                  )}
                 </div>
               </div>
 
-              {/* Velocity Insight Card */}
-              <div className="p-4 bg-white/5 border border-white/5 rounded flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded bg-[#262626] flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#adaaaa] uppercase tracking-widest font-bold">Monthly Velocity</p>
-                    <p className="text-sm text-white font-mono">
-                      {velocityStats.change >= 0 ? '+' : ''}{velocityStats.current} reviews this month
-                      <span className="text-xs text-[#adaaaa] font-normal tracking-normal ml-1 lowercase">({velocityStats.change >= 0 ? '+' : ''}{velocityStats.change}% vs last)</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-1 h-6 items-end">
-                  <div className="w-1 bg-white/10 h-[40%]" />
-                  <div className="w-1 bg-white/10 h-[60%]" />
-                  <div className="w-1 bg-white/10 h-[45%]" />
-                  <div className="w-1 bg-white/10 h-[70%]" />
-                  <div className="w-1 bg-primary h-[90%] shadow-[0_0_8px_rgba(105,246,184,0.4)]" />
+              {/* Weaknesses */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-[#ff716c] uppercase tracking-[0.15em] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Top Weaknesses
+                </h3>
+                <div className="space-y-3 max-h-[140px] overflow-hidden">
+                  {reviewsLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-6 w-full" />
+                    ))
+                  ) : topWeaknesses.length > 0 ? (
+                    topWeaknesses.map(([name, count]) => (
+                      <div key={name} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                          <span className="text-white truncate">{name}</span>
+                          <span className="text-[#ff716c] font-mono">{count}</span>
+                        </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-[#ff716c]/40 border-r border-[#ff716c]" 
+                            style={{ width: `${(count / maxWeakness) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-[#adaaaa]">No data available</p>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right Sidebar Stats */}
-        <div className="lg:col-span-4 bg-[#1a1919] rounded-xl p-6 border border-white/5 flex flex-col gap-4">
-          {/* Critical Review Alerts */}
-          <div>
-            <h3 className="text-sm font-black mb-4 uppercase tracking-[0.15em] text-[#ff716c] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 animate-pulse" />
-              Critical Alerts
-            </h3>
-            <div className="space-y-3">
-              {reviewsLoading ? (
-                Array.from({ length: 2 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))
-              ) : criticalReviews.length > 0 ? (
-                criticalReviews.map((review, index) => (
-                  <div 
-                    key={review.id}
-                    className={`p-3 rounded-lg ${index === 0 ? 'bg-[#1a1313] border border-[#ff716c]/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'bg-[#141414] border border-white/5'} group cursor-pointer hover:border-[#ff716c]/40 transition-all`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <span className={`text-xs font-bold uppercase tracking-wider ${index === 0 ? 'text-[#ff716c]' : 'text-[#adaaaa]'}`}>
-                        {index === 0 ? 'Immediate Response' : 'Priority Review'}
-                      </span>
-                      <span className="text-xs text-[#adaaaa]/50 font-mono">{formatTimeAgo(review.review_published_at)}</span>
-                    </div>
-                    <p className="text-sm text-white font-medium leading-tight line-clamp-2">
-                      &quot;{review.body?.slice(0, 80)}...&quot;
-                    </p>
+            {/* Right: Velocity Insight Card */}
+            <div className="col-span-3 flex flex-col justify-center border-l border-white/5 pl-6">
+              <div className="p-4 bg-white/5 border border-white/5 rounded">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded bg-[#262626] flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-secondary" />
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-[#adaaaa]">No critical alerts</p>
-              )}
-            </div>
-          </div>
-
-          {/* AI Engagement Performance */}
-          <div className="border-t border-white/5 pt-4">
-            <h3 className="text-sm font-black mb-3 uppercase tracking-[0.15em] text-[#adaaaa] flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              AI Performance
-            </h3>
-            <div className="bg-[#0e0e0e] border border-white/5 rounded-lg p-4 space-y-3">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#adaaaa]">AI Response Coverage</span>
-                  <span className="text-sm font-bold text-primary font-mono">{aiStats.coverage}%</span>
+                  <p className="text-xs text-[#adaaaa] uppercase tracking-widest font-bold">Monthly Velocity</p>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary shadow-[0_0_8px_rgba(105,246,184,0.4)]" style={{ width: `${aiStats.coverage}%` }} />
+                <p className="text-sm text-white font-mono">
+                  {velocityStats.change >= 0 ? '+' : ''}{velocityStats.current} reviews
+                  <span className="text-xs text-[#adaaaa] font-normal tracking-normal ml-1 lowercase">this month</span>
+                </p>
+                <p className="text-xs text-primary font-bold mt-1">
+                  {velocityStats.change >= 0 ? '+' : ''}{velocityStats.change}% vs last
+                </p>
+                <div className="flex gap-1 h-6 items-end mt-3">
+                  <div className="w-1.5 bg-white/10 h-[40%] rounded-sm" />
+                  <div className="w-1.5 bg-white/10 h-[60%] rounded-sm" />
+                  <div className="w-1.5 bg-white/10 h-[45%] rounded-sm" />
+                  <div className="w-1.5 bg-white/10 h-[70%] rounded-sm" />
+                  <div className="w-1.5 bg-primary h-[90%] rounded-sm shadow-[0_0_8px_rgba(105,246,184,0.4)]" />
                 </div>
-              </div>
-              <div className="flex justify-between items-center pt-2">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#adaaaa]">Human Hand-off</p>
-                  <p className="text-lg font-bold text-white font-mono">{aiStats.humanHandoff.toFixed(1)}%</p>
-                </div>
-                <div className="h-8 w-px bg-white/5" />
-                <div className="space-y-1 text-right">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#adaaaa]">Auto-Resolved</p>
-                  <p className="text-lg font-bold text-primary font-mono">{aiStats.autoResolved}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Response Efficiency */}
-          <div className="border-t border-white/5 pt-4">
-            <h3 className="text-sm font-black mb-2 uppercase tracking-[0.15em] text-[#adaaaa]">Response Efficiency</h3>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-xs text-[#adaaaa]/60 uppercase tracking-wider mb-1">Avg. Response Time (30d)</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-primary font-mono">4.2m</span>
-                  <span className="text-xs text-primary flex items-center gap-0.5 font-bold">
-                    <TrendingDown className="w-3 h-3" />18%
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-1 h-6 items-end">
-                <div className="w-0.5 bg-primary/20 h-[80%]" />
-                <div className="w-0.5 bg-primary/20 h-[70%]" />
-                <div className="w-0.5 bg-primary/20 h-[60%]" />
-                <div className="w-0.5 bg-primary/20 h-[50%]" />
-                <div className="w-0.5 bg-primary/20 h-[40%]" />
-                <div className="w-0.5 bg-primary h-[30%] shadow-[0_0_8px_rgba(105,246,184,0.4)]" />
               </div>
             </div>
           </div>
@@ -543,10 +455,9 @@ export function ReviewsPageClient({
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#adaaaa]" />
               <input
                 type="text"
-                className="w-full bg-[#1a1919] border-none text-sm py-3 pl-10 rounded focus:ring-1 focus:ring-primary/20 text-white placeholder:text-[#adaaaa]/50"
+                className="w-full bg-[#1a1919] border-none text-sm py-3 px-4 rounded focus:ring-1 focus:ring-primary/20 text-white placeholder:text-[#adaaaa]/50"
                 placeholder="Filter by keyword..."
                 value={keywordFilter}
                 onChange={(e) => setKeywordFilter(e.target.value)}
@@ -567,6 +478,18 @@ export function ReviewsPageClient({
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#adaaaa] pointer-events-none" />
             </div>
+            <div className="relative">
+              <select
+                className="bg-[#1a1919] border-none text-sm py-3 px-4 pr-10 rounded focus:ring-1 focus:ring-primary/20 text-[#adaaaa] appearance-none cursor-pointer"
+                value={replyFilter}
+                onChange={(e) => setReplyFilter(e.target.value)}
+              >
+                <option value="all">Reply Status (Any)</option>
+                <option value="replied">Replied</option>
+                <option value="unreplied">Not Replied</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#adaaaa] pointer-events-none" />
+            </div>
           </div>
           <div className="h-8 w-px bg-white/5 mx-2" />
           <button 
@@ -580,18 +503,8 @@ export function ReviewsPageClient({
 
       {/* Tactical Review Feed */}
       <section className="space-y-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">
-            Incoming Intelligence <span className="text-primary ml-2">{filteredReviews.length}</span>
-          </h2>
-          <div className="flex gap-2">
-            <button className="p-2 rounded-lg bg-[#201f1f] hover:bg-[#262626] text-[#adaaaa] transition-colors">
-              <Filter className="w-4 h-4" />
-            </button>
-            <button className="p-2 rounded-lg bg-[#201f1f] hover:bg-[#262626] text-[#adaaaa] transition-colors">
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold">Incoming Intelligence</h2>
         </div>
 
         {/* Review Cards */}
@@ -650,13 +563,26 @@ export function ReviewsPageClient({
                     </p>
 
                     {hasResponse ? (
-                      <div className="flex items-center gap-4 bg-[#201f1f]/50 p-4 rounded-xl border border-white/5">
-                        <Zap className="w-4 h-4 text-primary" />
-                        <p className="text-[11px] text-[#adaaaa] font-medium italic">
-                          Sent automated response via AI Autopilot.
-                        </p>
-                        <div className="flex-1" />
-                        <button className="text-[10px] text-primary font-bold uppercase tracking-widest">View Thread</button>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4 bg-[#201f1f]/50 p-4 rounded-xl border border-white/5">
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                          <p className="text-[11px] text-[#adaaaa] font-medium">
+                            Sent on {formatResponseDate(review.response_date)}
+                          </p>
+                          <div className="flex-1" />
+                          <button 
+                            onClick={() => setExpandedReviewId(expandedReviewId === review.id ? null : review.id)}
+                            className="text-[10px] text-primary font-bold uppercase tracking-widest hover:underline"
+                          >
+                            {expandedReviewId === review.id ? 'Hide Thread' : 'View Thread'}
+                          </button>
+                        </div>
+                        {expandedReviewId === review.id && (
+                          <div className="bg-[#1a1919] p-4 rounded-lg border border-primary/20 ml-8">
+                            <p className="text-xs text-[#adaaaa] uppercase tracking-widest mb-2 font-bold">Your Response</p>
+                            <p className="text-sm text-white leading-relaxed">{review.response_body}</p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex gap-4 pt-2">
@@ -664,17 +590,42 @@ export function ReviewsPageClient({
                           <Zap className="w-4 h-4" />
                           Draft AI Response
                         </Button>
-                        <Button variant="outline" className="px-5 py-2.5 bg-[#262626] text-white text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 hover:bg-[#2c2c2c] transition-colors">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setReplyingReviewId(replyingReviewId === review.id ? null : review.id);
+                            setManualReply(replyingReviewId === review.id ? '' : review.response_body || '');
+                          }}
+                          className="px-5 py-2.5 bg-[#262626] text-white text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 hover:bg-[#303030] hover:border-primary/20 transition-colors"
+                        >
                           Manual Reply
                         </Button>
-                        <div className="flex-1" />
-                        <button className="text-[#adaaaa] hover:text-[#ff716c] transition-colors">
-                          <Flag className="w-5 h-5" />
-                        </button>
-                        <button className="text-[#adaaaa] hover:text-secondary transition-colors">
-                          <Share2 className="w-5 h-5" />
-                        </button>
                       </div>
+                    )}
+
+                    {!hasResponse && replyingReviewId === review.id && (
+                      <form onSubmit={(event) => handleManualReplySubmit(review.id, event)} className="relative group pt-3">
+                        <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl group-focus-within:bg-primary/10 transition-all" />
+                        <div className="relative flex items-center bg-[#131313] rounded-2xl p-4 pl-6 border border-white/5 group-focus-within:border-primary/30 transition-all">
+                          <input
+                            type="text"
+                            placeholder="Write your response..."
+                            value={manualReply}
+                            onChange={(event) => setManualReply(event.target.value)}
+                            disabled={submitManualReplyMutation.isPending}
+                            className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-white placeholder:text-[#adaaaa]/40"
+                          />
+                          <div className="flex items-center pr-2">
+                            <button
+                              type="submit"
+                              disabled={!manualReply.trim() || submitManualReplyMutation.isPending}
+                              className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-[#002919] shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            >
+                              <Send className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </form>
                     )}
                   </div>
                 </div>

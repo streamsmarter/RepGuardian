@@ -36,7 +36,6 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -53,14 +52,11 @@ export default function RegisterPage() {
         throw new Error('Failed to create user');
       }
 
-      // Check if email confirmation is required
       if (authData.session) {
-        // User is already logged in (email confirmation disabled in Supabase)
         toast.success('Account created successfully!');
         router.push('/onboarding');
         router.refresh();
       } else {
-        // Email confirmation required - redirect to confirmation page
         router.push('/register/confirm');
       }
     } catch (error: unknown) {
@@ -101,7 +97,7 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -116,7 +112,7 @@ export default function RegisterPage() {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="********"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required

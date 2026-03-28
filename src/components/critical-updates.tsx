@@ -19,13 +19,10 @@ type UpdateRow = {
   id: string;
   created_at?: string | null;
   company_id?: string | null;
-
-  // try these common fields; adjust once you confirm actual schema
   type?: string | null;
   severity?: string | null;
   level?: string | null;
   status?: string | null;
-
   title?: string | null;
   message?: string | null;
   description?: string | null;
@@ -148,7 +145,7 @@ export function CriticalUpdates() {
           {loading ? (
             <div className="p-3 rounded-lg border flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading updates…
+              Loading updates...
             </div>
           ) : error ? (
             <div className="p-3 rounded-lg border text-sm text-muted-foreground">
