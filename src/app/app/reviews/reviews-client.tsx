@@ -329,9 +329,9 @@ export function ReviewsPageClient({
           {/* Header */}
           <div className="flex justify-between items-start z-10 border-b border-white/5 pb-4">
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-widest uppercase">Reviews Monitor</h2>
+              <h2 className="text-2xl font-bold text-white tracking-widest uppercase">Reviews Panel</h2>
               <p className="text-xs text-[#adaaaa] uppercase tracking-[0.3em] font-medium opacity-60">
-                Statistical Pulse // Live Reputation Feed
+                Recent Feedback Analysis
               </p>
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -372,7 +372,7 @@ export function ReviewsPageClient({
                     topStrengths.map(([name, count]) => (
                       <div key={name} className="space-y-1">
                         <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                          <span className="text-white truncate">{name}</span>
+                          <span className="text-white truncate">{name.replaceAll('_', ' ')}</span>
                           <span className="text-primary font-mono">{count}</span>
                         </div>
                         <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
@@ -403,7 +403,7 @@ export function ReviewsPageClient({
                     topWeaknesses.map(([name, count]) => (
                       <div key={name} className="space-y-1">
                         <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                          <span className="text-white truncate">{name}</span>
+                          <span className="text-white truncate">{name.replaceAll('_', ' ')}</span>
                           <span className="text-[#ff716c] font-mono">{count}</span>
                         </div>
                         <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
@@ -641,7 +641,7 @@ export function ReviewsPageClient({
               onClick={() => setVisibleCount((prev) => prev + 10)}
               className="flex items-center gap-3 px-10 py-4 bg-[#262626] rounded-xl text-white text-xs font-bold uppercase tracking-[0.2em] border border-white/5 hover:border-primary/30 hover:bg-[#2c2c2c] transition-all group"
             >
-              Scan Deeper Archives
+              See More
               <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
             </button>
           </div>
