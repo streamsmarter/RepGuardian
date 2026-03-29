@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSidebar } from '@/app/app/layout';
+import { useSidebar } from '@/lib/sidebar-context';
 import {
   LayoutDashboard,
   Inbox,
@@ -20,7 +20,7 @@ const navItems = [
   { href: '/command-center', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/inbox', label: 'Inbox', icon: Inbox },
   { href: '/app/reviews', label: 'Reviews', icon: MessageSquareText },
-  { href: '/app/referral', label: 'Referral', icon: UserPlus },
+  { href: '/app/referral', label: 'Referrals', icon: UserPlus },
   { href: '/app/recovery', label: 'Recovery', icon: HeartHandshake },
 ];
 
@@ -36,7 +36,7 @@ export function DashboardSidebar() {
       )}
     >
       <div className={cn("py-8", isCollapsed ? "px-4" : "px-6")}>
-        <div className="flex items-center gap-3">
+        <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-[#002919]" />
           </div>
@@ -44,7 +44,7 @@ export function DashboardSidebar() {
         </div>
         {!isCollapsed && (
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1 px-1 opacity-60">
-            AI Reputation Monitor
+            AI Growth Accelerator
           </p>
         )}
       </div>
@@ -70,10 +70,7 @@ export function DashboardSidebar() {
                 'flex items-center gap-3 py-3 transition-colors duration-200 rounded-lg',
                 isCollapsed ? 'justify-center px-2' : 'px-4',
                 isActive
-                  ? cn(
-                      'text-primary bg-[#201f1f] font-semibold',
-                      isCollapsed ? '' : 'border-r-2 border-primary'
-                    )
+                  ? 'text-primary bg-[#201f1f] font-semibold'
                   : 'text-gray-400 hover:text-gray-200 hover:bg-[#201f1f]'
               )}
               title={isCollapsed ? item.label : undefined}

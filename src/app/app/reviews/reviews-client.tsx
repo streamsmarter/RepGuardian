@@ -605,7 +605,7 @@ export function ReviewsPageClient({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-12 min-w-[160px] items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex h-12 min-w-[160px] items-center justify-between gap-3 rounded border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <span>{selectedRatingLabel}</span>
                   <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
@@ -614,13 +614,13 @@ export function ReviewsPageClient({
               <DropdownMenuContent
                 align="start"
                 sideOffset={10}
-                className="min-w-[220px] rounded-2xl border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
+                className="min-w-[220px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
                 {ratingFilterOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setRatingFilter(option.value)}
-                    className={`rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                    className={`rounded px-3 py-3 text-sm font-medium transition-colors ${
                       ratingFilter === option.value
                         ? 'bg-primary/12 text-primary'
                         : 'text-[#d0d0d0] focus:bg-white/5 focus:text-white'
@@ -635,7 +635,7 @@ export function ReviewsPageClient({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-12 min-w-[190px] items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex h-12 min-w-[190px] items-center justify-between gap-3 rounded border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <span>{selectedReplyLabel}</span>
                   <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
@@ -644,13 +644,13 @@ export function ReviewsPageClient({
               <DropdownMenuContent
                 align="start"
                 sideOffset={10}
-                className="min-w-[220px] rounded-2xl border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
+                className="min-w-[220px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
                 {replyFilterOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setReplyFilter(option.value)}
-                    className={`rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                    className={`rounded px-3 py-3 text-sm font-medium transition-colors ${
                       replyFilter === option.value
                         ? 'bg-primary/12 text-primary'
                         : 'text-[#d0d0d0] focus:bg-white/5 focus:text-white'
@@ -772,9 +772,9 @@ export function ReviewsPageClient({
                           <div className="flex-1" />
                           <button 
                             onClick={() => setExpandedReviewId(expandedReviewId === review.id ? null : review.id)}
-                            className="text-[10px] text-primary font-bold uppercase tracking-widest hover:underline"
+                            className="text-[10px] text-primary font-bold uppercase tracking-widest hover:underline cursor-pointer"
                           >
-                            {expandedReviewId === review.id ? 'Hide Thread' : 'View Thread'}
+                            {expandedReviewId === review.id ? 'Hide Reply' : 'View Reply'}
                           </button>
                         </div>
                         {expandedReviewId === review.id && (

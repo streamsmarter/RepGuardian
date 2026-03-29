@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, AlertTriangle, CheckCircle2, Clock, Info } from 'lucide-react';
-import { useSidebar } from '@/app/app/layout';
+import { useSidebar } from '@/lib/sidebar-context';
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import {
@@ -119,14 +119,14 @@ export function DashboardTopbar() {
           {mounted ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-transparent hover:text-primary transition-all">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:!bg-transparent hover:text-primary transition-all cursor-pointer">
                   <Bell className="w-5 h-5" />
                   {hasUnreadUpdates && (
                     <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 bg-[#0e0e0e]/95 backdrop-blur-xl border-[#1a1919]" align="end" forceMount>
+              <DropdownMenuContent className="w-80 bg-[#0e0e0e]/80 backdrop-blur-xl border-[#1a1919]" align="end" forceMount>
                 <DropdownMenuLabel className="text-white">Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#1a1919]" />
                 {updates && updates.length > 0 ? (

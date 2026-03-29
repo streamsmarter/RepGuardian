@@ -2,6 +2,21 @@
 
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { DashboardTopbar } from '@/components/dashboard/dashboard-topbar';
+import { SidebarProvider, useSidebar } from '@/lib/sidebar-context';
+
+function CommandCenterContent({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
+
+  return (
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
+      <DashboardSidebar />
+      <DashboardTopbar />
+      <main className={`pt-16 min-h-screen transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+        {children}
+      </main>
+    </div>
+  );
+}
 
 export default function CommandCenterLayout({
   children,
@@ -9,12 +24,8 @@ export default function CommandCenterLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#0e0e0e] text-white">
-      <DashboardSidebar />
-      <DashboardTopbar />
-      <main className="ml-64 pt-16 min-h-screen">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <CommandCenterContent>{children}</CommandCenterContent>
+    </SidebarProvider>
   );
 }

@@ -180,7 +180,7 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 bg-[#201f1f] rounded text-muted-foreground hover:text-primary transition-all text-xs font-medium gap-1"
+                className="h-8 px-3 bg-[#201f1f] rounded text-muted-foreground hover:!bg-[#201f1f] hover:text-primary transition-all text-xs font-medium gap-1 cursor-pointer"
               >
                 {timeRangeLabels[timeRange]}
                 <ChevronDown className="w-3 h-3" />

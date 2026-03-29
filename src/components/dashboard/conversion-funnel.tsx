@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, Mail, MousePointerClick, UserPlus, Filter } from 'lucide-react';
+import { Send, Mail, MousePointerClick, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FunnelStats {
@@ -49,10 +49,6 @@ export function ConversionFunnel({ stats }: ConversionFunnelProps) {
 
   return (
     <div className="bg-[#1a1919] rounded-xl p-8 overflow-hidden relative group">
-      <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-        <Filter className="w-24 h-24" />
-      </div>
-
       <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">
         Conversion Funnel
       </h3>
