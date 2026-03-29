@@ -17,10 +17,17 @@ import {
   ArrowDown,
   CheckCircle2,
   Send,
+  X,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { GoogleRatingGaugeCard } from '@/components/dashboard/google-rating-gauge-card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 interface ReviewsAnalysis {
@@ -49,6 +56,19 @@ interface Review {
   review_url: string | null;
 }
 
+const ratingFilterOptions = [
+  { value: 'all', label: 'Rating (Any)' },
+  { value: '5', label: '5 Stars' },
+  { value: '4', label: '4 Stars' },
+  { value: '3-', label: '3 Stars or less' },
+];
+
+const replyFilterOptions = [
+  { value: 'all', label: 'Reply Status' },
+  { value: 'replied', label: 'Replied' },
+  { value: 'unreplied', label: 'Not Replied' },
+];
+
 export function ReviewsPageClient({
   companyId,
   reviewsAnalysis,
@@ -66,8 +86,12 @@ export function ReviewsPageClient({
   const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
   const [manualReply, setManualReply] = useState('');
+  const [aiSuggestionReviewId, setAiSuggestionReviewId] = useState<string | null>(null);
+  const [aiSuggestionText, setAiSuggestionText] = useState('');
   const supabase = createBrowserComponentClient();
   const queryClient = useQueryClient();
+  const selectedRatingLabel = ratingFilterOptions.find((option) => option.value === ratingFilter)?.label ?? 'Rating (Any)';
+  const selectedReplyLabel = replyFilterOptions.find((option) => option.value === replyFilter)?.label ?? 'Reply Status';
 
   // Fetch reviews data
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
@@ -114,7 +138,7 @@ export function ReviewsPageClient({
 
   // Calculate review velocity (this month vs last month)
   const velocityStats = useMemo(() => {
-    if (!reviews || reviews.length === 0) return { current: 0, change: 0, total: 0 };
+    if (!reviews || reviews.length === 0) return { current: 0, positive: 0, change: 0, total: 0 };
     
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -127,6 +151,12 @@ export function ReviewsPageClient({
       return date >= thisMonthStart;
     }).length;
 
+    const positiveThisMonth = reviews.filter((r) => {
+      if (!r.review_published_at || r.stars === null) return false;
+      const date = new Date(r.review_published_at);
+      return date >= thisMonthStart && r.stars >= 4;
+    }).length;
+
     const lastMonth = reviews.filter((r) => {
       if (!r.review_published_at) return false;
       const date = new Date(r.review_published_at);
@@ -135,7 +165,7 @@ export function ReviewsPageClient({
 
     const change = lastMonth > 0 ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : (thisMonth > 0 ? 100 : 0);
 
-    return { current: thisMonth, change, total: reviews.length };
+    return { current: thisMonth, positive: positiveThisMonth, change, total: reviews.length };
   }, [reviews]);
 
   // Get critical reviews (low rating, recent, no response)
@@ -282,7 +312,7 @@ export function ReviewsPageClient({
   const maxStrength = topStrengths.length > 0 ? topStrengths[0][1] : 1;
   const maxWeakness = topWeaknesses.length > 0 ? topWeaknesses[0][1] : 1;
 
-  const submitManualReplyMutation = useMutation({
+  const saveReviewReplyMutation = useMutation({
     mutationFn: async ({ reviewId, responseBody }: { reviewId: string; responseBody: string }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('review') as any)
@@ -297,23 +327,129 @@ export function ReviewsPageClient({
         throw error;
       }
     },
-    onSuccess: (_data, variables) => {
-      toast.success('Reply saved');
-      setExpandedReviewId(variables.reviewId);
-      setReplyingReviewId(null);
-      setManualReply('');
-      queryClient.invalidateQueries({ queryKey: ['reviews-page', companyId] });
-    },
-    onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to submit reply');
+  });
+
+  const requestReviewReplyMutation = useMutation({
+    mutationFn: async ({
+      reviewId,
+      replyText,
+      reviewType,
+    }: {
+      reviewId: string;
+      replyText: string;
+      reviewType: 'human' | 'ai';
+    }) => {
+      const response = await fetch('/api/review-reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          review_id: reviewId,
+          company_id: companyId,
+          reply_text: replyText,
+          review_type: reviewType,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string; reply_text?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to contact reply webhook');
+      }
+
+      return payload;
     },
   });
 
-  const handleManualReplySubmit = (reviewId: string, event: React.FormEvent) => {
-    event.preventDefault();
-    if (!manualReply.trim()) return;
-    submitManualReplyMutation.mutate({ reviewId, responseBody: manualReply });
-  };
+  const completeReplySubmission = useCallback(
+    async (reviewId: string, responseBody: string, successMessage: string) => {
+      await saveReviewReplyMutation.mutateAsync({ reviewId, responseBody });
+      toast.success(successMessage);
+      setExpandedReviewId(reviewId);
+      setReplyingReviewId(null);
+      setManualReply('');
+      setAiSuggestionReviewId(null);
+      setAiSuggestionText('');
+      queryClient.invalidateQueries({ queryKey: ['reviews-page', companyId] });
+    },
+    [companyId, queryClient, saveReviewReplyMutation]
+  );
+
+  const handleDraftAiResponse = useCallback(
+    async (reviewId: string) => {
+      try {
+        setReplyingReviewId(null);
+        setManualReply('');
+        setAiSuggestionReviewId(reviewId);
+        setAiSuggestionText('');
+
+        const payload = await requestReviewReplyMutation.mutateAsync({
+          reviewId,
+          replyText: '',
+          reviewType: 'ai',
+        });
+
+        const suggestedReply = payload.reply_text?.trim();
+
+        if (!suggestedReply) {
+          throw new Error('Webhook returned an empty AI reply');
+        }
+
+        setAiSuggestionText(suggestedReply);
+        toast.success('AI draft ready to review');
+      } catch (error: unknown) {
+        setAiSuggestionReviewId(null);
+        setAiSuggestionText('');
+        toast.error(error instanceof Error ? error.message : 'Failed to draft AI response');
+      }
+    },
+    [requestReviewReplyMutation]
+  );
+
+  const handleApproveAiSuggestion = useCallback(
+    async (reviewId: string) => {
+      const suggestion = aiSuggestionText.trim();
+      if (!suggestion) return;
+
+      try {
+        await completeReplySubmission(reviewId, suggestion, 'AI reply approved and saved');
+      } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : 'Failed to approve AI reply');
+      }
+    },
+    [aiSuggestionText, completeReplySubmission]
+  );
+
+  const clearAiSuggestion = useCallback(() => {
+    setAiSuggestionReviewId(null);
+    setAiSuggestionText('');
+  }, []);
+
+  const handleManualReplySubmit = useCallback(
+    async (reviewId: string, event: React.FormEvent) => {
+      event.preventDefault();
+      const responseBody = manualReply.trim();
+      if (!responseBody) return;
+
+      try {
+        await requestReviewReplyMutation.mutateAsync({
+          reviewId,
+          replyText: responseBody,
+          reviewType: 'human',
+        });
+
+        await completeReplySubmission(
+          reviewId,
+          responseBody,
+          'Reply sent'
+        );
+      } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : 'Failed to submit reply');
+      }
+    },
+    [completeReplySubmission, manualReply, requestReviewReplyMutation]
+  );
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -435,7 +571,7 @@ export function ReviewsPageClient({
                   <span className="text-xs text-[#adaaaa] font-normal tracking-normal ml-1 lowercase">this month</span>
                 </p>
                 <p className="text-xs text-primary font-bold mt-1">
-                  {velocityStats.change >= 0 ? '+' : ''}{velocityStats.change}% vs last
+                  {velocityStats.positive} positive
                 </p>
                 <div className="flex gap-1 h-6 items-end mt-3">
                   <div className="w-1.5 bg-white/10 h-[40%] rounded-sm" />
@@ -465,31 +601,66 @@ export function ReviewsPageClient({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                className="bg-[#1a1919] border-none text-sm py-3 px-4 pr-10 rounded focus:ring-1 focus:ring-primary/20 text-[#adaaaa] appearance-none cursor-pointer"
-                value={ratingFilter}
-                onChange={(e) => setRatingFilter(e.target.value)}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-12 min-w-[160px] items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <span>{selectedRatingLabel}</span>
+                  <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={10}
+                className="min-w-[220px] rounded-2xl border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
-                <option value="all">Rating (Any)</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3-">3 Stars or less</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#adaaaa] pointer-events-none" />
-            </div>
-            <div className="relative">
-              <select
-                className="bg-[#1a1919] border-none text-sm py-3 px-4 pr-10 rounded focus:ring-1 focus:ring-primary/20 text-[#adaaaa] appearance-none cursor-pointer"
-                value={replyFilter}
-                onChange={(e) => setReplyFilter(e.target.value)}
+                {ratingFilterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setRatingFilter(option.value)}
+                    className={`rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                      ratingFilter === option.value
+                        ? 'bg-primary/12 text-primary'
+                        : 'text-[#d0d0d0] focus:bg-white/5 focus:text-white'
+                    }`}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-12 min-w-[190px] items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <span>{selectedReplyLabel}</span>
+                  <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={10}
+                className="min-w-[220px] rounded-2xl border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
-                <option value="all">Reply Status (Any)</option>
-                <option value="replied">Replied</option>
-                <option value="unreplied">Not Replied</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#adaaaa] pointer-events-none" />
-            </div>
+                {replyFilterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setReplyFilter(option.value)}
+                    className={`rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                      replyFilter === option.value
+                        ? 'bg-primary/12 text-primary'
+                        : 'text-[#d0d0d0] focus:bg-white/5 focus:text-white'
+                    }`}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="h-8 w-px bg-white/5 mx-2" />
           <button 
@@ -562,6 +733,35 @@ export function ReviewsPageClient({
                       {review.body || 'No review text'}
                     </p>
 
+                    {!hasResponse && aiSuggestionReviewId === review.id && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">
+                          AI Suggestion
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-white">
+                          {aiSuggestionText || 'Generating suggestion...'}
+                        </p>
+                        <div className="mt-3 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={clearAiSuggestion}
+                            disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#262626] text-[#adaaaa] transition-colors hover:border-[#ff716c]/30 hover:text-[#ff716c] disabled:opacity-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApproveAiSuggestion(review.id)}
+                            disabled={!aiSuggestionText.trim() || requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[#002919] transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {hasResponse ? (
                       <div className="space-y-3">
                         <div className="flex items-center gap-4 bg-[#201f1f]/50 p-4 rounded-xl border border-white/5">
@@ -586,14 +786,21 @@ export function ReviewsPageClient({
                       </div>
                     ) : (
                       <div className="flex gap-4 pt-2">
-                        <Button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] rounded-lg text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all">
+                        <Button
+                          type="button"
+                          onClick={() => handleDraftAiResponse(review.id)}
+                          disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] rounded-lg text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-60"
+                        >
                           <Zap className="w-4 h-4" />
-                          Draft AI Response
+                          {requestReviewReplyMutation.isPending && aiSuggestionReviewId === review.id ? 'Drafting...' : 'Draft AI Response'}
                         </Button>
                         <Button
                           type="button"
                           onClick={() => {
                             setReplyingReviewId(replyingReviewId === review.id ? null : review.id);
+                            setAiSuggestionReviewId(null);
+                            setAiSuggestionText('');
                             setManualReply(replyingReviewId === review.id ? '' : review.response_body || '');
                           }}
                           className="px-5 py-2.5 bg-[#262626] text-white text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 hover:bg-[#303030] hover:border-primary/20 transition-colors"
@@ -606,20 +813,20 @@ export function ReviewsPageClient({
                     {!hasResponse && replyingReviewId === review.id && (
                       <form onSubmit={(event) => handleManualReplySubmit(review.id, event)} className="relative group pt-3">
                         <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl group-focus-within:bg-primary/10 transition-all" />
-                        <div className="relative flex items-center bg-[#131313] rounded-2xl p-4 pl-6 border border-white/5 group-focus-within:border-primary/30 transition-all">
-                          <input
-                            type="text"
+                        <div className="relative flex items-end gap-3 bg-[#131313] rounded-2xl p-4 pl-6 border border-white/5 group-focus-within:border-primary/30 transition-all">
+                          <textarea
+                            rows={2}
                             placeholder="Write your response..."
                             value={manualReply}
                             onChange={(event) => setManualReply(event.target.value)}
-                            disabled={submitManualReplyMutation.isPending}
-                            className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-white placeholder:text-[#adaaaa]/40"
+                            disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                            className="flex-1 resize-none bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-white placeholder:text-[#adaaaa]/40"
                           />
                           <div className="flex items-center pr-2">
                             <button
                               type="submit"
-                              disabled={!manualReply.trim() || submitManualReplyMutation.isPending}
-                              className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-[#002919] shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              disabled={!manualReply.trim() || requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                              className="min-w-10 h-10 px-3 bg-primary rounded-xl flex items-center justify-center gap-2 text-[#002919] shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
                               <Send className="w-5 h-5" />
                             </button>
