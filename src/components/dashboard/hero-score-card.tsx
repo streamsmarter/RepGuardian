@@ -1,7 +1,8 @@
 'use client';
 
-import { BadgeCheck, Download } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface HeroScoreCardProps {
   reputationPercent?: number;
@@ -33,9 +34,7 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
           {reputationPercent}<span className="text-primary text-4xl">%</span>
         </h2>
         <p className="text-muted-foreground mt-4 max-w-xs leading-relaxed">
-          Your brand presence is stronger than{' '}
-          <span className="text-foreground font-semibold">{competitorPercent}%</span> of competitors in your
-          industry segment.
+          No active reputation risks detected
         </p>
       </div>
 
@@ -46,16 +45,11 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
       </div>
 
       <div className="mt-8 flex gap-4 relative z-10">
-        <Button className="px-6 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-xs rounded-lg hover:opacity-90 transition-all">
-          <Download className="w-4 h-4 mr-2" />
-          Download Audit
-        </Button>
-        <Button
-          variant="outline"
-          className="px-6 py-2.5 bg-[#262626] text-foreground font-bold text-xs rounded-lg border border-white/5 hover:bg-[#2c2c2c] transition-all"
-        >
-          Details
-        </Button>
+        <Link href="/app/reviews">
+          <Button className="px-6 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-xs rounded-lg hover:opacity-90 transition-all">
+            View Insights
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -204,67 +204,51 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
         </div>
       </div>
 
-      <div className="flex-1 w-full min-h-[200px] flex items-end justify-between gap-2 relative">
+      <div className="h-48 relative">
         {isLoading ? (
           <Skeleton className="absolute inset-0 rounded-lg" />
         ) : (
           <>
-            {/* Chart Grid Lines */}
-            <div className="absolute inset-0 flex flex-col justify-between opacity-5">
-              <div className="w-full border-t border-white" />
-              <div className="w-full border-t border-white" />
-              <div className="w-full border-t border-white" />
-              <div className="w-full border-t border-white" />
-            </div>
-
-            {/* SVG Chart - Line chart with 3-day period data points */}
-            <svg
-              className="absolute inset-0 w-full h-full"
-              viewBox={`0 0 ${Math.max(chartData.periodCounts.length - 1, 1)} 40`}
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#69f6b8" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#69f6b8" stopOpacity="0" />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="0.3" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              {chartData.periodCounts.length > 0 && chartData.maxCount > 0 && (
-                <>
-                  {/* Line path */}
-                  <path
-                    d={chartData.periodCounts.map((count, i) => {
-                      const x = i;
-                      const y = 38 - (count / chartData.maxCount) * 35;
-                      return `${i === 0 ? 'M' : 'L'}${x} ${y}`;
-                    }).join(' ')}
-                    fill="none"
-                    stroke="#69f6b8"
-                    strokeWidth="0.15"
-                    filter="url(#glow)"
-                  />
-                  {/* Fill area */}
-                  <path
-                    d={`${chartData.periodCounts.map((count, i) => {
-                      const x = i;
-                      const y = 38 - (count / chartData.maxCount) * 35;
-                      return `${i === 0 ? 'M' : 'L'}${x} ${y}`;
-                    }).join(' ')} L${chartData.periodCounts.length - 1} 40 L0 40 Z`}
-                    fill="url(#chartFill)"
-                  />
-                </>
-              )}
+            {/* SVG Line Chart */}
+            <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+              {/* Grid Lines */}
+              <line className="stroke-[#484847]/10" x1="0" x2="100" y1="25" y2="25" />
+              <line className="stroke-[#484847]/10" x1="0" x2="100" y1="50" y2="50" />
+              <line className="stroke-[#484847]/10" x1="0" x2="100" y1="75" y2="75" />
+              
+              {chartData.periodCounts.length > 0 && chartData.maxCount > 0 && (() => {
+                const points = chartData.periodCounts.map((count, i) => {
+                  const x = (i / Math.max(chartData.periodCounts.length - 1, 1)) * 100;
+                  const y = 100 - (count / chartData.maxCount) * 80;
+                  return { x, y };
+                });
+                
+                const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ');
+                const areaPath = `${linePath} L100 100 L0 100 Z`;
+                
+                return (
+                  <>
+                    {/* Area Fill */}
+                    <path 
+                      className="fill-primary/10" 
+                      d={areaPath}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    
+                    {/* Line */}
+                    <path 
+                      className="stroke-primary fill-none" 
+                      strokeWidth="1.5"
+                      d={linePath}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </>
+                );
+              })()}
             </svg>
 
             {/* Chart Labels */}
-            <div className="absolute bottom-[-24px] w-full flex justify-between px-2 text-[9px] text-muted-foreground/40 uppercase tracking-widest">
+            <div className="absolute bottom-0 w-full flex justify-between px-2 text-[9px] text-muted-foreground/40 uppercase tracking-widest">
               {chartData.labels.map((label, i) => (
                 <span key={i}>{label}</span>
               ))}
