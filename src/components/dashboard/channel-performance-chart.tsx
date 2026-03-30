@@ -5,6 +5,24 @@ interface ChannelPerformanceChartProps {
   conversionsCount?: number;
 }
 
+// Create smooth curve using cubic bezier (Catmull-Rom spline)
+const smoothPath = (pts: {x: number, y: number}[]) => {
+  if (pts.length < 2) return '';
+  let path = `M${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(i + 2, pts.length - 1)];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    path += ` C${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return path;
+};
+
 export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0 }: ChannelPerformanceChartProps) {
   const totalClicks = clicksCount;
   const totalConversions = conversionsCount;
@@ -14,11 +32,26 @@ export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0 
   const clicksHeight = 100 - (totalClicks / maxValue) * 80;
   const conversionsHeight = 100 - (totalConversions / maxValue) * 80;
 
-  // Simple path showing the values
-  const clicksPath = `M0 100 L30 100 L50 ${clicksHeight} L70 ${clicksHeight + 10} L100 ${clicksHeight}`;
-  const conversionsPath = `M0 100 L30 100 L50 ${conversionsHeight} L70 ${conversionsHeight + 5} L100 ${conversionsHeight}`;
-  const clicksAreaPath = `${clicksPath} V 100 H 0 Z`;
-  const conversionsAreaPath = `${conversionsPath} V 100 H 0 Z`;
+  // Create smooth curve points
+  const clicksPoints = [
+    { x: 0, y: 100 },
+    { x: 25, y: 90 },
+    { x: 50, y: clicksHeight },
+    { x: 75, y: clicksHeight + 10 },
+    { x: 100, y: clicksHeight }
+  ];
+  const conversionsPoints = [
+    { x: 0, y: 100 },
+    { x: 25, y: 95 },
+    { x: 50, y: conversionsHeight },
+    { x: 75, y: conversionsHeight + 5 },
+    { x: 100, y: conversionsHeight }
+  ];
+
+  const clicksPath = smoothPath(clicksPoints);
+  const conversionsPath = smoothPath(conversionsPoints);
+  const clicksAreaPath = `${clicksPath} L100 100 L0 100 Z`;
+  const conversionsAreaPath = `${conversionsPath} L100 100 L0 100 Z`;
 
   return (
     <div className="col-span-12 bg-[#1a1919] rounded-xl p-8">
