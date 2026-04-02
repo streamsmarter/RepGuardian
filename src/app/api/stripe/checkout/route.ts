@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, PLANS } from '@/lib/stripe';
+import { getStripe, PLANS } from '@/lib/stripe';
 import { createServerComponentClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const selectedPlan = PLANS[plan as keyof typeof PLANS];
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer_email: user.email,
       line_items: [
         {
