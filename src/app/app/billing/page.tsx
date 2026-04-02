@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -58,7 +58,7 @@ const features = [
   },
 ];
 
-export default function BillingPage() {
+function BillingPageContent() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -271,5 +271,13 @@ export default function BillingPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="p-6 md:p-12 min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <BillingPageContent />
+    </Suspense>
   );
 }
