@@ -103,7 +103,21 @@ export async function POST(req: Request) {
     }
 
     try {
-      return NextResponse.json(JSON.parse(text));
+      const parsed = JSON.parse(text);
+      // Handle array format: [{ "reply": "..." }]
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].reply) {
+        return NextResponse.json({ reply_text: parsed[0].reply });
+      }
+      // Handle object format: { "reply": "..." }
+      if (parsed.reply) {
+        return NextResponse.json({ reply_text: parsed.reply });
+      }
+      // Handle already correct format: { "reply_text": "..." }
+      if (parsed.reply_text) {
+        return NextResponse.json(parsed);
+      }
+      // Fallback: return as-is
+      return NextResponse.json({ reply_text: JSON.stringify(parsed) });
     } catch {
       return NextResponse.json({ reply_text: text });
     }

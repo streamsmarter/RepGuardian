@@ -17,7 +17,8 @@ import {
   ArrowDown,
   CheckCircle2,
   Send,
-  X,
+  Copy,
+  RefreshCw,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -57,14 +58,14 @@ interface Review {
 }
 
 const ratingFilterOptions = [
-  { value: 'all', label: 'Rating (Any)' },
+  { value: 'all', label: 'Any rating' },
   { value: '5', label: '5 Stars' },
   { value: '4', label: '4 Stars' },
   { value: '3-', label: '3 Stars or less' },
 ];
 
 const replyFilterOptions = [
-  { value: 'all', label: 'Reply Status' },
+  { value: 'all', label: 'Any status' },
   { value: 'replied', label: 'Replied' },
   { value: 'unreplied', label: 'Not Replied' },
 ];
@@ -90,8 +91,8 @@ export function ReviewsPageClient({
   const [aiSuggestionText, setAiSuggestionText] = useState('');
   const supabase = createBrowserComponentClient();
   const queryClient = useQueryClient();
-  const selectedRatingLabel = ratingFilterOptions.find((option) => option.value === ratingFilter)?.label ?? 'Rating (Any)';
-  const selectedReplyLabel = replyFilterOptions.find((option) => option.value === replyFilter)?.label ?? 'Reply Status';
+  const selectedRatingLabel = ratingFilterOptions.find((option) => option.value === ratingFilter)?.label ?? 'Any rating';
+  const selectedReplyLabel = replyFilterOptions.find((option) => option.value === replyFilter)?.label ?? 'Any status';
 
   // Fetch reviews data
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
@@ -675,7 +676,7 @@ export function ReviewsPageClient({
       {/* Tactical Review Feed */}
       <section className="space-y-4">
         <div className="mb-6">
-          <h2 className="text-xl font-bold">Incoming Intelligence</h2>
+          <h2 className="text-xl font-bold">Incoming Reviews</h2>
         </div>
 
         {/* Review Cards */}
@@ -738,27 +739,45 @@ export function ReviewsPageClient({
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">
                           AI Suggestion
                         </p>
-                        <p className="mt-2 text-sm leading-relaxed text-white">
-                          {aiSuggestionText || 'Generating suggestion...'}
-                        </p>
-                        <div className="mt-3 flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={clearAiSuggestion}
-                            disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#262626] text-[#adaaaa] transition-colors hover:border-[#ff716c]/30 hover:text-[#ff716c] disabled:opacity-50"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleApproveAiSuggestion(review.id)}
-                            disabled={!aiSuggestionText.trim() || requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[#002919] transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {aiSuggestionText ? (
+                          <p className="mt-2 text-sm leading-relaxed text-white">
+                            {aiSuggestionText}
+                          </p>
+                        ) : (
+                          <div className="mt-3 flex items-center gap-3">
+                            <div className="flex gap-1">
+                              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                            <span className="text-sm text-primary/70 italic">AI is crafting a response...</span>
+                          </div>
+                        )}
+                        {aiSuggestionText && (
+                          <div className="mt-3 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDraftAiResponse(review.id)}
+                              disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#262626] text-[#adaaaa] transition-colors hover:border-primary/30 hover:text-primary disabled:opacity-50"
+                              title="Regenerate response"
+                            >
+                              <RefreshCw className={`h-4 w-4 ${requestReviewReplyMutation.isPending ? 'animate-spin' : ''}`} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(aiSuggestionText);
+                                toast.success('Response copied to clipboard');
+                              }}
+                              disabled={requestReviewReplyMutation.isPending || saveReviewReplyMutation.isPending}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-[#002919] transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                              title="Copy to clipboard"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -784,7 +803,7 @@ export function ReviewsPageClient({
                           </div>
                         )}
                       </div>
-                    ) : (
+                    ) : aiSuggestionReviewId !== review.id && (
                       <div className="flex gap-4 pt-2">
                         <Button
                           type="button"
@@ -794,18 +813,6 @@ export function ReviewsPageClient({
                         >
                           <Zap className="w-4 h-4" />
                           {requestReviewReplyMutation.isPending && aiSuggestionReviewId === review.id ? 'Drafting...' : 'Draft AI Response'}
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setReplyingReviewId(replyingReviewId === review.id ? null : review.id);
-                            setAiSuggestionReviewId(null);
-                            setAiSuggestionText('');
-                            setManualReply(replyingReviewId === review.id ? '' : review.response_body || '');
-                          }}
-                          className="px-5 py-2.5 bg-[#262626] text-white text-xs font-bold uppercase tracking-wider rounded-lg border border-white/5 hover:bg-[#303030] hover:border-primary/20 transition-colors"
-                        >
-                          Manual Reply
                         </Button>
                       </div>
                     )}

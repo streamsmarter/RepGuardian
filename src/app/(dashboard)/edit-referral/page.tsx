@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RewardTypeSelector } from '@/components/dashboard/reward-type-selector';
-import { EconomicsPreview, SimulatedROI } from '@/components/dashboard/economics-preview';
+import { RewardSummary, TacticalNote } from '@/components/dashboard/reward-summary';
 import { useProgramWizard, RewardType } from '@/lib/program-wizard-context';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -207,8 +207,8 @@ export default function EditReferralPage() {
 
           {/* Summary / Preview Sidebar */}
           <section className="space-y-6">
-            <EconomicsPreview />
-            <SimulatedROI />
+            <RewardSummary />
+            <TacticalNote />
           </section>
         </div>
 

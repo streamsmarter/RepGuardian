@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
@@ -50,12 +50,14 @@ function dayKeyLocal(d: Date) {
 }
 
 // Group daily counts into periods (e.g., 3-day averages)
-function groupByPeriod(counts: number[], periodSize: number): number[] {
-  const result: number[] = [];
-  for (let i = 0; i < counts.length; i += periodSize) {
-    const slice = counts.slice(i, i + periodSize);
-    const sum = slice.reduce((a, b) => a + b, 0);
-    result.push(sum);
+function groupByPeriod(entries: [string, number][], periodSize: number): { date: string; count: number }[] {
+  const result: { date: string; count: number }[] = [];
+  for (let i = 0; i < entries.length; i += periodSize) {
+    const slice = entries.slice(i, i + periodSize);
+    const sum = slice.reduce((a, b) => a + b[1], 0);
+    // Use the middle date of the period for display
+    const midIndex = Math.floor(slice.length / 2);
+    result.push({ date: slice[midIndex][0], count: sum });
   }
   return result;
 }
@@ -75,6 +77,8 @@ function generateLabels(entries: [string, number][]) {
 export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
   const supabase = createBrowserComponentClient();
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const [hoverData, setHoverData] = useState<{ x: number; y: number; date: string; count: number } | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const { data: reviewData, isLoading } = useQuery({
     queryKey: ['command-center-reviews', companyId],
@@ -122,9 +126,9 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
     }
 
     if (!reviewData || reviewData.length === 0) {
-      const entries = Object.entries(dailyCounts);
-      const grouped = groupByPeriod(entries.map(([, count]) => count), 3);
-      return { periodCounts: grouped, maxCount: 0, labels: generateLabels(entries) };
+      const entries = Object.entries(dailyCounts) as [string, number][];
+      const grouped = groupByPeriod(entries, 3);
+      return { periodData: grouped, maxCount: 0, labels: generateLabels(entries) };
     }
 
     // Count reviews per day
@@ -137,14 +141,13 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
       if (key in dailyCounts) dailyCounts[key] += 1;
     }
 
-    const entries = Object.entries(dailyCounts);
-    const counts = entries.map(([, count]) => count);
+    const entries = Object.entries(dailyCounts) as [string, number][];
     
     // Group into 3-day periods for smoother chart
-    const periodCounts = groupByPeriod(counts, 3);
-    const maxCount = Math.max(...periodCounts, 1);
+    const periodData = groupByPeriod(entries, 3);
+    const maxCount = Math.max(...periodData.map(p => p.count), 1);
 
-    return { periodCounts, maxCount, labels: generateLabels(entries) };
+    return { periodData, maxCount, labels: generateLabels(entries) };
   }, [reviewData, timeRange]);
 
   // Current month review count
@@ -204,7 +207,7 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
         </div>
       </div>
 
-      <div className="h-48 relative">
+      <div className="h-48 relative" ref={chartRef}>
         {isLoading ? (
           <Skeleton className="absolute inset-0 rounded-lg" />
         ) : (
@@ -216,11 +219,11 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
               <line className="stroke-[#484847]/10" x1="0" x2="100" y1="50" y2="50" />
               <line className="stroke-[#484847]/10" x1="0" x2="100" y1="75" y2="75" />
               
-              {chartData.periodCounts.length > 0 && chartData.maxCount > 0 && (() => {
-                const points = chartData.periodCounts.map((count, i) => {
-                  const x = (i / Math.max(chartData.periodCounts.length - 1, 1)) * 100;
-                  const y = 100 - (count / chartData.maxCount) * 80;
-                  return { x, y };
+              {chartData.periodData.length > 0 && chartData.maxCount > 0 && (() => {
+                const points = chartData.periodData.map((item, i) => {
+                  const x = (i / Math.max(chartData.periodData.length - 1, 1)) * 100;
+                  const y = 100 - (item.count / chartData.maxCount) * 80;
+                  return { x, y, date: item.date, count: item.count };
                 });
                 
                 // Create smooth curve using cubic bezier
@@ -260,6 +263,26 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
                       d={linePath}
                       vectorEffect="non-scaling-stroke"
                     />
+                    
+                    {/* Invisible hover areas for each point */}
+                    {points.map((point, idx) => (
+                      <circle
+                        key={idx}
+                        cx={point.x}
+                        cy={point.y}
+                        r="4"
+                        className="fill-transparent cursor-pointer"
+                        onMouseEnter={(e) => {
+                          const rect = chartRef.current?.getBoundingClientRect();
+                          if (rect) {
+                            const xPos = (point.x / 100) * rect.width;
+                            const yPos = (point.y / 100) * rect.height;
+                            setHoverData({ x: xPos, y: yPos, date: point.date, count: point.count });
+                          }
+                        }}
+                        onMouseLeave={() => setHoverData(null)}
+                      />
+                    ))}
                   </>
                 );
               })()}
@@ -271,6 +294,24 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
                 <span key={i}>{label}</span>
               ))}
             </div>
+
+            {/* Hover Tooltip */}
+            {hoverData && (
+              <div 
+                className="absolute pointer-events-none bg-[#262626] border border-[#484847]/30 rounded-lg px-3 py-2 shadow-lg z-10"
+                style={{
+                  left: Math.min(hoverData.x, (chartRef.current?.offsetWidth || 200) - 120),
+                  top: Math.max(hoverData.y - 50, 0),
+                }}
+              >
+                <p className="text-xs font-medium text-white">
+                  {new Date(hoverData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+                <p className="text-sm font-bold text-primary">
+                  {hoverData.count} {hoverData.count === 1 ? 'review' : 'reviews'}
+                </p>
+              </div>
+            )}
           </>
         )}
       </div>

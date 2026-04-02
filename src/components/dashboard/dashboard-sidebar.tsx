@@ -84,16 +84,20 @@ export function DashboardSidebar() {
 
       <div className={cn(isCollapsed ? "p-2" : "p-6")}>
         {isCollapsed ? (
-          <Button 
-            className="w-full h-10 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all p-0"
-            title="Upgrade to Pro"
-          >
-            <Shield className="w-4 h-4" />
-          </Button>
+          <Link href="/app/billing">
+            <Button 
+              className="w-full h-10 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all p-0"
+              title="Upgrade to Pro"
+            >
+              <Shield className="w-4 h-4" />
+            </Button>
+          </Link>
         ) : (
-          <Button className="w-full py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all">
-            Upgrade to Pro
-          </Button>
+          <Link href="/app/billing">
+            <Button className="w-full py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all">
+              Upgrade to Pro
+            </Button>
+          </Link>
         )}
       </div>
     </aside>
