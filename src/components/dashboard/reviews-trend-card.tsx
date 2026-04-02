@@ -272,7 +272,7 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
                         cy={point.y}
                         r="4"
                         className="fill-transparent cursor-pointer"
-                        onMouseEnter={(e) => {
+                        onMouseEnter={() => {
                           const rect = chartRef.current?.getBoundingClientRect();
                           if (rect) {
                             const xPos = (point.x / 100) * rect.width;
@@ -300,7 +300,7 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
               <div 
                 className="absolute pointer-events-none bg-[#262626] border border-[#484847]/30 rounded-lg px-3 py-2 shadow-lg z-10"
                 style={{
-                  left: Math.min(hoverData.x, (chartRef.current?.offsetWidth || 200) - 120),
+                  left: hoverData.x,
                   top: Math.max(hoverData.y - 50, 0),
                 }}
               >

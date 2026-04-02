@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   Globe,
   BadgeCheck,
-  CheckCircle,
 } from 'lucide-react';
 
 const features = [
