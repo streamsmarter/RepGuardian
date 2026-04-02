@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase environment variables are not set');
+    }
+    supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return supabaseAdmin;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -48,7 +58,7 @@ export async function POST(request: NextRequest) {
           const plan = session.metadata?.plan;
           const periodEnd = new Date(now.getTime() + (plan === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000);
           
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('subscription')
             .upsert({
               company_id: companyId,
@@ -74,7 +84,7 @@ export async function POST(request: NextRequest) {
         const currentPeriodStart = (subscription as unknown as { current_period_start: number }).current_period_start;
         const cancelAtPeriodEnd = (subscription as unknown as { cancel_at_period_end: boolean }).cancel_at_period_end;
         
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscription')
           .update({
             status: subscription.status,
@@ -90,7 +100,7 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('subscription')
           .update({
             status: 'canceled',
@@ -105,7 +115,7 @@ export async function POST(request: NextRequest) {
         const subscriptionId = (invoice as unknown as { subscription: string | null }).subscription;
         
         if (subscriptionId) {
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('subscription')
             .update({
               status: 'past_due',
