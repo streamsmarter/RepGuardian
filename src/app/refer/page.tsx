@@ -141,15 +141,15 @@ function ReferForm() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
               <PartyPopper className="w-3.5 h-3.5 text-primary" />
               <span className="text-[0.625rem] font-bold tracking-[0.1em] text-primary uppercase">
-                Exclusive Access
+                Private invite
               </span>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
               You&apos;ve been invited
             </h1>
             <p className="text-[#adaaaa] text-base leading-relaxed max-w-[320px] mx-auto">
-              Enter your phone number to activate your{' '}
-              <span className="text-primary font-semibold">15% discount</span> for your next
+              Enter your phone number to unlock your{' '}
+              <span className="text-primary font-semibold">exclusive reward</span> for your next
               booking.
             </p>
           </section>
@@ -160,14 +160,14 @@ function ReferForm() {
               <Gift className="w-16 h-16 text-primary" />
             </div>
             <div className="flex flex-col items-start text-left space-y-1">
-              <span className="text-[0.6875rem] font-bold tracking-widest text-[#adaaaa] uppercase">
-                Your Reward Status
-              </span>
-              <div className="flex items-center gap-3">
-                <span className="text-4xl font-bold text-primary">15% OFF</span>
+                <span className="text-[0.6875rem] font-bold tracking-widest text-[#adaaaa] uppercase">
+                  Reserved For You
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold text-primary">Limited Offer</span>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Core Action Form */}
           <form onSubmit={handleSubmit} className="w-full space-y-6">
@@ -217,7 +217,7 @@ function ReferForm() {
             </button>
 
             <p className="text-[0.75rem] text-[#adaaaa]/80 italic">
-              Your reward will be automatically applied when you book with this phone number.
+              We&apos;ll apply your offer automatically when you book with this phone number.
             </p>
           </form>
 

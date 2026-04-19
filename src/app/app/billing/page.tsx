@@ -1,282 +1,421 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import {
-  MessageSquare,
-  Brain,
-  Rss,
-  PenTool,
-  GitBranch,
-  BarChart3,
   AlertTriangle,
-  Lock,
-  ShieldCheck,
-  Globe,
   BadgeCheck,
+  BarChart3,
+  Brain,
+  Calendar,
+  ExternalLink,
+  GitBranch,
+  Loader2,
+  MessageSquare,
+  PenTool,
+  RefreshCw,
+  Rss,
+  X,
 } from 'lucide-react';
+import { ActivationDialog } from '@/components/billing/activation-dialog';
+import { BILLING_PLANS } from '@/lib/billing';
 
-const features = [
+type PlanOption = 'monthly' | 'annual';
+
+interface Subscription {
+  id: string;
+  status: string;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean | null;
+  trialEndsAt: string | null;
+  billingAmount?: number | null;
+  billingInterval?: string | null;
+  plan: {
+    id: string;
+    name: string;
+    price_monthly: number;
+    price_annual: number;
+  } | null;
+  stripeSubscriptionId: string | null;
+}
+
+interface BillingState {
+  hasCustomerMapping: boolean;
+  stripeCustomerId: string | null;
+  paymentMethodConnectedHint: boolean;
+  subscriptionStatusHint: string | null;
+  canManageBilling: boolean;
+}
+
+const PLAN_OPTIONS: Array<{
+  id: PlanOption;
+  label: string;
+  badge?: string;
+  price: number;
+  interval: 'Month' | 'Year' | 'One-Time';
+  note: string;
+}> = [
+  { id: 'monthly', label: 'Monthly', price: BILLING_PLANS.monthly.amount, interval: 'Month', note: 'Billed monthly' },
+  { id: 'annual', label: 'Annual', badge: 'Save 20%', price: BILLING_PLANS.annual.amount, interval: 'Year', note: 'Billed annually - Save $100' },
+];
+
+const FEATURES = [
   {
     icon: MessageSquare,
-    iconColor: 'text-primary',
     title: 'Automated Review Collection',
     description: 'SMS-driven outreach triggers upon appointment completion.',
   },
   {
     icon: Brain,
-    iconColor: 'text-secondary',
     title: 'Sentiment Intelligence',
     description: 'Proprietary AI analyzes feedback tone to detect hidden customer friction.',
   },
   {
     icon: Rss,
-    iconColor: 'text-primary',
     title: 'Unified Messenger',
     description: 'Direct SMS integration with Autopilot toggle for 24/7 engagement.',
   },
   {
     icon: PenTool,
-    iconColor: 'text-secondary',
     title: 'AI Review Architect',
     description: 'Generate contextual, high-quality review responses with a single click.',
   },
   {
     icon: GitBranch,
-    iconColor: 'text-primary',
     title: 'Smart Feedback Routing',
     description: 'Positive vibes to Google; constructive feedback to your private inbox.',
   },
   {
     icon: BarChart3,
-    iconColor: 'text-secondary',
     title: 'Diagnostic Analysis',
     description: 'Automated breakdown of systemic business strengths and vulnerabilities.',
   },
 ];
 
-function BillingPageContent() {
-  const [isAnnual, setIsAnnual] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const searchParams = useSearchParams();
+export default function BillingPage() {
+  const [selectedPlan, setSelectedPlan] = useState<PlanOption>('annual');
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [billingState, setBillingState] = useState<BillingState | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
+  const [isActivationOpen, setIsActivationOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
-  const monthlyPrice = 49.99;
-  const annualPrice = 499.99;
-  const currentPrice = isAnnual ? annualPrice : monthlyPrice;
-  const billingPeriod = isAnnual ? 'Year' : 'Month';
+  const activePlanOption = useMemo(
+    () => PLAN_OPTIONS.find((plan) => plan.id === selectedPlan) || PLAN_OPTIONS[1],
+    [selectedPlan]
+  );
 
-  const success = searchParams.get('success');
-  const canceled = searchParams.get('canceled');
-  const router = useRouter();
-
-  useEffect(() => {
-    if (success) {
-      toast.success('Subscription activated successfully!');
-      router.replace('/app/billing');
-    }
-    if (canceled) {
-      toast.error('Checkout was canceled.');
-      router.replace('/app/billing');
-    }
-  }, [success, canceled, router]);
-
-  const handleCheckout = async () => {
-    setIsLoading(true);
+  const fetchSubscription = useCallback(async () => {
     try {
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan: isAnnual ? 'annual' : 'monthly',
-        }),
-      });
-
+      const response = await fetch('/api/stripe/subscription');
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
+      if (response.ok) {
+        setSubscription(data.subscription);
+        setBillingState(data.billing || null);
       }
     } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to start checkout. Please try again.');
+      console.error('Failed to fetch subscription:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingSubscription(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchSubscription();
+  }, [fetchSubscription]);
+
+  const MANAGEABLE_SUBSCRIPTION_STATUSES = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'];
+  const TERMINAL_SUBSCRIPTION_STATUSES = ['canceled', 'incomplete_expired'];
+
+  const hasManageableSubscription =
+    subscription &&
+    MANAGEABLE_SUBSCRIPTION_STATUSES.includes(subscription.status) &&
+    !TERMINAL_SUBSCRIPTION_STATUSES.includes(subscription.status);
+
+  const formatDate = (dateString: string | null) =>
+    !dateString
+      ? 'N/A'
+      : new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+  const getStatusBadge = (status: string, cancelAtPeriodEnd: boolean | null) => {
+    if (cancelAtPeriodEnd) return <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-yellow-400">Canceling</span>;
+    if (status === 'active') return <span className="rounded-full bg-primary/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-primary">Active</span>;
+    if (status === 'trialing') return <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-blue-400">Trial</span>;
+    if (status === 'past_due') return <span className="rounded-full bg-destructive/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-destructive">Past Due</span>;
+    if (status === 'canceled') return <span className="rounded-full bg-gray-500/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-400">Canceled</span>;
+    return <span className="rounded-full bg-gray-500/20 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-400">{status}</span>;
+  };
+
+  const handleOpenPortal = async () => {
+    setIsOpeningPortal(true);
+    try {
+      const response = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to create billing portal session');
+      if (data.url) window.location.href = data.url;
+    } catch (error) {
+      console.error('Billing portal error:', error);
+      toast.error('Failed to open Stripe billing portal');
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of your billing period.')) return;
+
+    setIsCanceling(true);
+    try {
+      const response = await fetch('/api/stripe/subscription', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancelImmediately: false }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel subscription');
+      }
+
+      toast.success('Subscription will be canceled at the end of your billing period');
+      await fetchSubscription();
+    } catch (error) {
+      console.error('Failed to cancel subscription:', error);
+      toast.error('Failed to cancel subscription');
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    setIsReactivating(true);
+    try {
+      const response = await fetch('/api/stripe/subscription', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reactivate' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reactivate subscription');
+      }
+
+      toast.success('Subscription reactivated successfully');
+      await fetchSubscription();
+    } catch (error) {
+      console.error('Failed to reactivate subscription:', error);
+      toast.error('Failed to reactivate subscription');
+    } finally {
+      setIsReactivating(false);
     }
   };
 
   return (
-    <div className="p-6 md:p-12 relative min-h-screen">
-      {/* Light leak effect */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(105, 246, 184, 0.04) 0%, transparent 70%)',
-        }}
+    <div className="relative min-h-screen p-6 md:p-12">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(circle at center, rgba(105, 246, 184, 0.04) 0%, transparent 70%)' }}
       />
 
-      <section className="max-w-5xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
+      <section className="relative z-10 mx-auto max-w-5xl">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-5xl font-extrabold tracking-tighter md:text-6xl">
             RepGuardian Subscription
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-            Unleash autonomous reputation defense. Deploy the intelligent monolith to secure your brand&apos;s digital perimeter.
+          <p className="mx-auto max-w-xl text-lg text-muted-foreground">
+            Unleash autonomous reputation defense. Deploy the intelligent monolith to secure your
+            brand&apos;s digital perimeter.
           </p>
         </div>
 
-        {/* Subscription Toggle */}
-        <div className="flex justify-center items-center gap-6 mb-16">
-          <span className={`text-sm font-medium uppercase tracking-widest ${!isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
-            Monthly
-          </span>
-          <button
-            onClick={() => setIsAnnual(!isAnnual)}
-            className="w-16 h-8 bg-[#201f1f] rounded-full p-1 relative flex items-center cursor-pointer"
-          >
-            <div 
-              className={`w-6 h-6 bg-primary rounded-full shadow-[0_0_12px_rgba(105,246,184,0.4)] transition-transform duration-200 ${
-                isAnnual ? 'translate-x-8' : 'translate-x-0'
-              }`}
-            />
-          </button>
-          <div className="flex items-center gap-3">
-            <span className={`text-sm font-bold uppercase tracking-widest ${isAnnual ? 'text-primary' : 'text-muted-foreground'}`}>
-              Annual
-            </span>
-            <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary/20">
-              Save 20%
-            </span>
-          </div>
-        </div>
-
-        {/* Main Pricing Card */}
-        <div className="bg-[#1a1919] rounded-2xl p-8 md:p-12 relative overflow-hidden">
-          {/* Decorative glow */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 blur-[80px] rounded-full" />
-
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Pricing Sidebar */}
-            <div className="lg:w-1/3 flex flex-col justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#262626] rounded-full mb-6">
-                  <BadgeCheck className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">
-                    Enterprise Protocol
-                  </span>
-                </div>
-                <h3 className="text-4xl font-black tracking-tighter mb-2 italic">
-                  RepGuardian
-                </h3>
-                <p className="text-muted-foreground mb-8 leading-relaxed">
-                  The complete autonomous suite for high-stakes brand intelligence.
-                </p>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-5xl font-extrabold tracking-tight">
-                    ${currentPrice.toFixed(2)}
-                  </span>
-                  <span className="text-muted-foreground text-sm uppercase tracking-widest">
-                    / {billingPeriod}
-                  </span>
-                </div>
-                {isAnnual && (
-                  <p className="text-[11px] text-primary font-bold uppercase tracking-widest mb-10">
-                    Billed annually • Save $100
-                  </p>
-                )}
-                {!isAnnual && (
-                  <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mb-10">
-                    Billed monthly
-                  </p>
-                )}
-              </div>
-              <button 
-                onClick={handleCheckout}
-                disabled={isLoading}
-                className="w-full py-5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-black text-sm uppercase tracking-[0.2em] rounded-lg shadow-[0_20px_40px_-15px_rgba(6,183,127,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(6,183,127,0.4)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Activate'
-                )}
-              </button>
-            </div>
-
-            {/* Feature Breakdown: Bento Grid */}
-            <div className="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="bg-[#201f1f] p-6 rounded-xl border border-[#484847]/10 hover:bg-[#262626] transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center mb-4">
-                    <feature.icon className={`w-5 h-5 ${feature.iconColor}`} />
+        {hasManageableSubscription ? (
+          <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#1a1919] p-8">
+            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/5 blur-[80px]" />
+            <div className="relative">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <div className="mb-2 flex items-center gap-3">
+                    <h3 className="text-xl font-bold">Current Subscription</h3>
+                    {getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
                   </div>
-                  <h4 className="font-bold uppercase tracking-wide mb-2">
-                    {feature.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
+                  <p className="text-sm text-muted-foreground">
+                    {subscription.plan?.name || 'RepGuardian Pro'}
                   </p>
                 </div>
-              ))}
+                <div className="text-right">
+                  <div className="text-3xl font-extrabold">
+                    ${(subscription.billingAmount ?? (subscription.billingInterval === 'year' ? subscription.plan?.price_annual : subscription.plan?.price_monthly) ?? 49.99).toFixed(2)}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /{subscription.billingInterval === 'year' ? 'yr' : 'mo'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-xl bg-[#262626] p-4">
+                  <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    Current Period
+                  </div>
+                  <p className="font-semibold">
+                    {formatDate(subscription.currentPeriodStart)} - {formatDate(subscription.currentPeriodEnd)}
+                  </p>
+                </div>
+                {subscription.cancelAtPeriodEnd ? (
+                  <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+                    <div className="mb-1 flex items-center gap-2 text-sm text-yellow-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      Cancellation Scheduled
+                    </div>
+                    <p className="font-semibold text-yellow-400">
+                      Access ends {formatDate(subscription.currentPeriodEnd)}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {subscription.cancelAtPeriodEnd ? (
+                  <button
+                    onClick={() => void handleReactivateSubscription()}
+                    disabled={isReactivating}
+                    className="flex items-center gap-2 rounded-lg bg-primary/10 px-6 py-3 font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    {isReactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Reactivate Subscription
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => void handleCancelSubscription()}
+                    disabled={isCanceling}
+                    className="flex items-center gap-2 rounded-lg bg-destructive/10 px-6 py-3 font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+                  >
+                    {isCanceling ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                    Cancel Subscription
+                  </button>
+                )}
+                <button
+                  onClick={() => void handleOpenPortal()}
+                  disabled={isOpeningPortal || !billingState?.canManageBilling}
+                  className="flex items-center gap-2 rounded-lg bg-[#262626] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#333] disabled:opacity-50"
+                >
+                  {isOpeningPortal ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                  Manage Billing
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-16 flex justify-center">
+            <div className="inline-flex flex-wrap items-center gap-3 rounded-2xl border border-[#484847]/20 bg-[#1a1919] p-3">
+              {PLAN_OPTIONS.map((plan) => {
+                const isSelected = selectedPlan === plan.id;
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-[#484847]/20 bg-[#201f1f] text-muted-foreground hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold uppercase tracking-widest">{plan.label}</span>
+                      {plan.badge ? (
+                        <span className="rounded-full border border-primary/20 bg-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                          {plan.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs">
+                      ${plan.price.toFixed(2)}
+                      {plan.interval === 'One-Time' ? '' : ` / ${plan.interval}`}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        {/* Anomalous Alerting Section */}
-        <div className="mt-12 bg-[#262626]/40 backdrop-blur-xl p-8 rounded-2xl border border-[#484847]/20 flex flex-col md:flex-row items-center gap-8">
-          <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-8 h-8 text-destructive" />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h4 className="text-xl font-bold mb-2">Anomalous Alerting System</h4>
-            <p className="text-muted-foreground">
-              Receive zero-latency notifications across SMS and Desktop whenever a critical negative experience is detected by the RepGuardian core.
-            </p>
-          </div>
-          <div className="shrink-0 flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs">
-            <span>Active Monitoring</span>
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-          </div>
-        </div>
+        {!hasManageableSubscription ? (
+          <div className="relative overflow-hidden rounded-2xl bg-[#1a1919] p-8 md:p-12">
+            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/5 blur-[80px]" />
+            <div className="flex flex-col gap-12 lg:flex-row">
+              <div className="flex flex-col justify-between lg:w-1/3">
+                <div>
+                  <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#262626] px-3 py-1">
+                    <BadgeCheck className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+                      Enterprise Protocol
+                    </span>
+                  </div>
+                  <h3 className="mb-2 text-4xl font-black italic tracking-tighter">RepGuardian</h3>
+                  <p className="mb-8 leading-relaxed text-muted-foreground">
+                    The complete autonomous suite for high-stakes brand intelligence.
+                  </p>
+                  <div className="mb-1 flex items-baseline gap-2">
+                    <span className="text-5xl font-extrabold tracking-tight">
+                      ${activePlanOption.price.toFixed(2)}
+                    </span>
+                    <span className="text-sm uppercase tracking-widest text-muted-foreground">
+                      {activePlanOption.interval === 'One-Time' ? '' : ` / ${activePlanOption.interval}`}
+                    </span>
+                  </div>
+                  <p
+                    className={`mb-6 text-[11px] font-bold uppercase tracking-widest ${
+                      selectedPlan === 'annual' ? 'text-primary' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {activePlanOption.note}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsActivationOpen(true)}
+                  className="w-full rounded-lg bg-gradient-to-br from-primary to-[#06b77f] py-5 text-sm font-black uppercase tracking-[0.2em] text-[#002919] shadow-[0_20px_40px_-15px_rgba(6,183,127,0.3)] transition-all hover:shadow-[0_25px_50px_-12px_rgba(6,183,127,0.4)] active:scale-[0.98]"
+                >
+                  Activate
+                </button>
+              </div>
 
-        {/* Trust Badges */}
-        <div className="mt-20 flex flex-wrap justify-center gap-12 grayscale opacity-40">
-          <div className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            <span className="text-sm font-bold uppercase tracking-widest">AES-256 Encrypted</span>
+              <div className="grid grid-cols-1 gap-4 lg:w-2/3 md:grid-cols-2">
+                {FEATURES.map((feature) => (
+                  <div
+                    key={feature.title}
+                    className="rounded-xl border border-[#484847]/10 bg-[#201f1f] p-6 transition-colors hover:bg-[#262626]"
+                  >
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-black">
+                      <feature.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h4 className="mb-2 font-bold uppercase tracking-wide">{feature.title}</h4>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5" />
-            <span className="text-sm font-bold uppercase tracking-widest">Compliance Ready</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            <span className="text-sm font-bold uppercase tracking-widest">Global API access</span>
-          </div>
-        </div>
+        ) : null}
       </section>
-    </div>
-  );
-}
 
-export default function BillingPage() {
-  return (
-    <Suspense fallback={<div className="p-6 md:p-12 min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
-      <BillingPageContent />
-    </Suspense>
+      <ActivationDialog
+        open={isActivationOpen}
+        onOpenChange={setIsActivationOpen}
+        plan={activePlanOption}
+        onActivationSuccess={(nextSubscription) => {
+          setSubscription(nextSubscription);
+          void fetchSubscription();
+        }}
+      />
+    </div>
   );
 }

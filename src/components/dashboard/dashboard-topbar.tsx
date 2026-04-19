@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -72,22 +71,40 @@ export function DashboardTopbar() {
   const router = useRouter();
   const supabase = createBrowserComponentClient();
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [userInitials, setUserInitials] = useState<string>('');
   const [mounted, setMounted] = useState(false);
   const { isCollapsed } = useSidebar();
 
   useEffect(() => {
     setMounted(true);
     const getCompanyId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+
+        if (error || !user?.id) {
+          setCompanyId(null);
+          return;
+        }
+
         const { data: appUser } = await supabase
           .from('app_user')
-          .select('company_id')
+          .select('company_id, name')
           .eq('user_id', user.id)
-          .single() as { data: { company_id: string } | null };
+          .single() as { data: { company_id: string; name: string | null } | null };
         if (appUser?.company_id) {
           setCompanyId(appUser.company_id);
         }
+        if (appUser?.name) {
+          const names = appUser.name.trim().split(' ');
+          const initials = names.length >= 2
+            ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
+            : names[0][0].toUpperCase();
+          setUserInitials(initials);
+        } else if (user.email) {
+          setUserInitials(user.email[0].toUpperCase());
+        }
+      } catch {
+        setCompanyId(null);
       }
     };
     getCompanyId();
@@ -172,12 +189,8 @@ export function DashboardTopbar() {
               <Bell className="w-5 h-5" />
             </button>
           )}
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-muted">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
-              alt="User avatar"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-8 h-8 rounded-full border border-white/10 bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-bold text-xs">{userInitials || '?'}</span>
           </div>
         </div>
       </div>

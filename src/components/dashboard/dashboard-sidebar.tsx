@@ -21,7 +21,7 @@ const navItems = [
   { href: '/app/inbox', label: 'Inbox', icon: Inbox },
   { href: '/app/reviews', label: 'Reviews', icon: MessageSquareText },
   { href: '/app/referral', label: 'Referrals', icon: UserPlus },
-  { href: '/app/recovery', label: 'Recovery', icon: HeartHandshake },
+  { href: '/app/recovery', label: 'Reengagement', icon: HeartHandshake },
 ];
 
 export function DashboardSidebar() {
@@ -71,7 +71,7 @@ export function DashboardSidebar() {
                 isCollapsed ? 'justify-center px-2' : 'px-4',
                 isActive
                   ? 'text-primary bg-[#201f1f] font-semibold'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-[#201f1f]'
+                  : 'text-[#e6e1e1] hover:text-white hover:bg-[#201f1f]'
               )}
               title={isCollapsed ? item.label : undefined}
             >

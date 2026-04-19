@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, UserPlus, Handshake, Sparkles, Loader2, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -13,11 +13,20 @@ import { useProgramWizard, RewardType } from '@/lib/program-wizard-context';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
+interface ReferralProgramRecord {
+  company_id: string;
+  referrer_reward_amount: number | null;
+  referred_reward_amount: number | null;
+  referrer_reward_type: string | null;
+  referred_reward_type: string | null;
+}
+
 export default function EditReferralPage() {
   const router = useRouter();
-  const supabase = createBrowserComponentClient();
+  const [supabase] = useState(() => createBrowserComponentClient());
   const { data, updateRewards } = useProgramWizard();
   const [isSaving, setIsSaving] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(true);
 
   const mapRewardType = (type: string): string => {
     switch (type) {
@@ -30,6 +39,71 @@ export default function EditReferralPage() {
         return 'discount_fixed';
     }
   };
+
+  const mapDbRewardType = (type: string | null | undefined): RewardType => {
+    switch (type) {
+      case 'discount_percentage':
+        return 'percentage';
+      case 'discount_fixed':
+      case 'cash':
+        return 'cash';
+      case 'credit':
+        return 'credit';
+      default:
+        return 'cash';
+    }
+  };
+
+  useEffect(() => {
+    const loadCurrentProgram = async () => {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          setIsHydrating(false);
+          return;
+        }
+
+        const { data: appUser, error: appUserError } = await supabase
+          .from('app_user')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle() as { data: { company_id: string } | null; error: unknown };
+
+        if (appUserError || !appUser?.company_id) {
+          setIsHydrating(false);
+          return;
+        }
+
+        const { data: program, error: programError } = await (supabase.from('referral_program') as any)
+          .select('company_id, referrer_reward_amount, referred_reward_amount, referrer_reward_type, referred_reward_type')
+          .eq('company_id', appUser.company_id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (programError || !program) {
+          setIsHydrating(false);
+          return;
+        }
+
+        const currentProgram = program as ReferralProgramRecord;
+
+        updateRewards({
+          referrerRewardType: mapDbRewardType(currentProgram.referrer_reward_type),
+          referrerAmount: currentProgram.referrer_reward_amount ?? 0,
+          referrerMinSpend: 0,
+          referredRewardType: mapDbRewardType(currentProgram.referred_reward_type),
+          referredAmount: currentProgram.referred_reward_amount ?? 0,
+          referredMinSpend: 0,
+        });
+      } finally {
+        setIsHydrating(false);
+      }
+    };
+
+    loadCurrentProgram();
+  }, [supabase, updateRewards]);
 
   const handleSave = async () => {
     if (data.rewards.referrerAmount <= 0) {
@@ -224,13 +298,13 @@ export default function EditReferralPage() {
 
           <Button 
             onClick={handleSave}
-            disabled={isSaving || data.rewards.referrerAmount <= 0 || data.rewards.referredAmount <= 0}
+            disabled={isSaving || isHydrating || data.rewards.referrerAmount <= 0 || data.rewards.referredAmount <= 0}
             className="px-12 py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? (
+            {isSaving || isHydrating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                {isHydrating ? 'Loading...' : 'Saving...'}
               </>
             ) : (
               <>

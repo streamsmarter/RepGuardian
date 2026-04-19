@@ -56,7 +56,7 @@ export async function getCompanyContext(): Promise<CompanyContextType> {
       user,
       company_id: userData.company_id,
       company: userData.company,
-      role: userData.role
+      role: userData.role || 'member'
     };
   }
   
@@ -93,7 +93,7 @@ export async function getUserCompanies() {
     })),
     ...((memberCompanies || []) as unknown as AppUser[]).map(appUser => ({
       ...appUser.company,
-      role: appUser.role
+      role: appUser.role || 'member'
     }))
   ];
   

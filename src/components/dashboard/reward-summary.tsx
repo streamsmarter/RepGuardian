@@ -1,6 +1,6 @@
 'use client';
 
-import { Lightbulb, Clock, ShoppingCart, Verified } from 'lucide-react';
+import { Lightbulb, Users, ShoppingCart, Verified } from 'lucide-react';
 import { useProgramWizard, RewardType } from '@/lib/program-wizard-context';
 
 function getRewardTypeLabel(type: RewardType): string {
@@ -52,12 +52,10 @@ export function RewardSummary() {
               {getRewardTypeLabel(rewards.referrerRewardType)}
             </span>
           </div>
-          {rewards.referrerMinSpend > 0 && (
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-black/50 p-2 rounded">
-              <Clock className="w-4 h-4" />
-              <span>Unlocked after ${rewards.referrerMinSpend.toFixed(2)} spend</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-black/50 p-2 rounded">
+            <Users className="w-4 h-4" />
+            <span>For every referred client</span>
+          </div>
         </div>
 
         {/* Referred Summary */}

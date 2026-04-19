@@ -79,20 +79,35 @@ export function Navbar() {
   useEffect(() => {
     setMounted(true);
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserEmail(user.email);
-        setUserInitial(user.email[0].toUpperCase());
-      }
-      if (user?.id) {
-        const { data: appUser } = await supabase
-          .from('app_user')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single() as { data: { company_id: string } | null };
-        if (appUser?.company_id) {
-          setCompanyId(appUser.company_id);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+
+        if (error || !user) {
+          setUserEmail(null);
+          setUserInitial('?');
+          setCompanyId(null);
+          return;
         }
+
+        if (user.email) {
+          setUserEmail(user.email);
+          setUserInitial(user.email[0].toUpperCase());
+        }
+
+        if (user.id) {
+          const { data: appUser } = await supabase
+            .from('app_user')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single() as { data: { company_id: string } | null };
+          if (appUser?.company_id) {
+            setCompanyId(appUser.company_id);
+          }
+        }
+      } catch {
+        setUserEmail(null);
+        setUserInitial('?');
+        setCompanyId(null);
       }
     };
     getUser();

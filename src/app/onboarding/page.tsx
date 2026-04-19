@@ -81,8 +81,8 @@ export default function OnboardingPage() {
         .insert({
           name: companyName.trim(),
           user_id: user.id,
-          payment_plan: 'free',
           crm_type: 'vagaro',
+          subscription_status: 'free trial',
         } as any)
         .select()
         .single();

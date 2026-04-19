@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 
 export type ProgramType = 'referral' | 'reactivation' | 'upsells' | 'promo' | 'loyalty';
 
@@ -71,34 +71,34 @@ const ProgramWizardContext = createContext<ProgramWizardContextType | undefined>
 export function ProgramWizardProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<ProgramWizardData>(defaultData);
 
-  const updateIdentity = (identity: Partial<ProgramIdentity>) => {
+  const updateIdentity = useCallback((identity: Partial<ProgramIdentity>) => {
     setData((prev) => ({
       ...prev,
       identity: { ...prev.identity, ...identity },
     }));
-  };
+  }, []);
 
-  const updateRewards = (rewards: Partial<ProgramRewards>) => {
+  const updateRewards = useCallback((rewards: Partial<ProgramRewards>) => {
     setData((prev) => ({
       ...prev,
       rewards: { ...prev.rewards, ...rewards },
     }));
-  };
+  }, []);
 
-  const updateAudience = (audience: Partial<ProgramAudience>) => {
+  const updateAudience = useCallback((audience: Partial<ProgramAudience>) => {
     setData((prev) => ({
       ...prev,
       audience: { ...prev.audience, ...audience },
     }));
-  };
+  }, []);
 
-  const setClientCount = (count: number) => {
+  const setClientCount = useCallback((count: number) => {
     setData((prev) => ({ ...prev, clientCount: count }));
-  };
+  }, []);
 
-  const resetWizard = () => {
+  const resetWizard = useCallback(() => {
     setData(defaultData);
-  };
+  }, []);
 
   const isStepValid = (step: number): boolean => {
     switch (step) {

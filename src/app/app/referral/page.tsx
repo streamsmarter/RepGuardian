@@ -50,7 +50,7 @@ interface FunnelStats {
 }
 
 export default function ReferralPage() {
-  const supabase = createBrowserComponentClient();
+  const [supabase] = useState(() => createBrowserComponentClient());
   const router = useRouter();
   const queryClient = useQueryClient();
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -58,18 +58,30 @@ export default function ReferralPage() {
   // Get company ID for current user
   useEffect(() => {
     const getCompanyId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
-        const { data: appUser } = await supabase
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user?.id) {
+          setCompanyId(null);
+          return;
+        }
+
+        const { data: appUser, error: appUserError } = await supabase
           .from('app_user')
           .select('company_id')
           .eq('user_id', user.id)
-          .single() as { data: { company_id: string } | null };
-        if (appUser?.company_id) {
-          setCompanyId(appUser.company_id);
+          .maybeSingle() as { data: { company_id: string } | null; error: unknown };
+
+        if (appUserError) {
+          setCompanyId(null);
+          return;
         }
+
+        setCompanyId(appUser?.company_id ?? null);
+      } catch {
+        setCompanyId(null);
       }
     };
+
     getCompanyId();
   }, [supabase]);
 
@@ -78,20 +90,27 @@ export default function ReferralPage() {
     queryKey: ['referral-program', companyId],
     queryFn: async () => {
       if (!companyId) return null;
-      
-      const { data, error } = await (supabase.from('referral_program') as any)
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('status', 'active')
-        .single();
 
-      if (error) {
-        console.error('Error fetching referral program:', error);
+      try {
+        const { data, error } = await (supabase.from('referral_program') as any)
+          .select('*')
+          .eq('company_id', companyId)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          return null;
+        }
+
+        return data as ReferralProgram | null;
+      } catch {
         return null;
       }
-      return data as ReferralProgram;
     },
     enabled: !!companyId,
+    retry: false,
   });
 
   // Fetch campaign data with stats (active or paused)
@@ -100,21 +119,27 @@ export default function ReferralPage() {
     queryFn: async () => {
       if (!companyId) return null;
 
-      const { data, error } = await (supabase.from('campaign') as any)
-        .select('*')
-        .eq('company_id', companyId)
-        .in('status', ['active', 'paused'])
-        .eq('type', 'referral')
-        .maybeSingle();
+      try {
+        const { data, error } = await (supabase.from('campaign') as any)
+          .select('*')
+          .eq('company_id', companyId)
+          .in('status', ['active', 'paused'])
+          .eq('type', 'referral')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching campaign:', error.message, error.code, error.details);
+        if (error) {
+          return null;
+        }
+
+        return data as Campaign | null;
+      } catch {
         return null;
       }
-
-      return data as Campaign;
     },
     enabled: !!companyId,
+    retry: false,
   });
 
   // Mutation to toggle campaign status
@@ -190,7 +215,7 @@ export default function ReferralPage() {
               <Button
                 variant="ghost"
                 onClick={handleToggleStatus}
-                disabled={toggleStatusMutation.isPending}
+                disabled={toggleStatusMutation.isPending || !campaign}
                 className="flex items-center gap-2 px-4 py-2 rounded bg-[#201f1f] hover:bg-primary/10 hover:text-primary text-foreground text-sm font-semibold transition-colors"
               >
                 {campaign?.status === 'active' ? (

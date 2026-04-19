@@ -1,28 +1,74 @@
 import Stripe from 'stripe';
 
 let stripeInstance: Stripe | null = null;
+const useStripeTestMode = process.env.NODE_ENV !== 'production';
+const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2026-02-25.clover';
+
+function assertStripeKeyPrefix(key: string, expectedPrefix: 'sk_test_' | 'sk_live_' | 'pk_test_' | 'pk_live_') {
+  if (!key.startsWith(expectedPrefix)) {
+    throw new Error(`Expected Stripe key with prefix ${expectedPrefix}`);
+  }
+}
+
+function getServerStripeSecretKey(): string {
+  const key = useStripeTestMode ? process.env.STRIPE_TEST_SECRET_KEY : process.env.STRIPE_SECRET_KEY;
+
+  if (!key) {
+    throw new Error(
+      useStripeTestMode
+        ? 'STRIPE_TEST_SECRET_KEY is not set'
+        : 'STRIPE_SECRET_KEY is not set'
+    );
+  }
+
+  assertStripeKeyPrefix(key, useStripeTestMode ? 'sk_test_' : 'sk_live_');
+
+  return key;
+}
+
+export function getStripePublishableKey(): string {
+  const key = useStripeTestMode
+    ? process.env.NEXT_PUBLIC_STRIPE_TEST_PUBLISHABLE_KEY
+    : process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+  if (!key) {
+    throw new Error(
+      useStripeTestMode
+        ? 'NEXT_PUBLIC_STRIPE_TEST_PUBLISHABLE_KEY is not set'
+        : 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set'
+    );
+  }
+
+  assertStripeKeyPrefix(key, useStripeTestMode ? 'pk_test_' : 'pk_live_');
+
+  return key;
+}
 
 export function getStripe(): Stripe {
   if (!stripeInstance) {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set');
-    }
-    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    stripeInstance = new Stripe(getServerStripeSecretKey(), {
+      apiVersion: STRIPE_API_VERSION,
       typescript: true,
     });
   }
+
   return stripeInstance;
 }
 
-export const PLANS = {
-  monthly: {
-    priceId: process.env.STRIPE_MONTHLY_PRICE_ID || '',
-    price: 49.99,
-    interval: 'month' as const,
-  },
-  annual: {
-    priceId: process.env.STRIPE_ANNUAL_PRICE_ID || '',
-    price: 499.99,
-    interval: 'year' as const,
-  },
-};
+export function getAppUrl(fallbackOrigin?: string): string {
+  return process.env.NEXT_PUBLIC_APP_URL || fallbackOrigin || 'http://localhost:3000';
+}
+
+export function getStripeWebhookSecret(): string {
+  const secret = useStripeTestMode ? process.env.STRIPE_TEST_WEBHOOK_SECRET : process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      useStripeTestMode
+        ? 'STRIPE_TEST_WEBHOOK_SECRET is not set'
+        : 'STRIPE_WEBHOOK_SECRET is not set'
+    );
+  }
+
+  return secret;
+}
