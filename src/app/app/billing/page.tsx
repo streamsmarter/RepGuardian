@@ -53,7 +53,7 @@ const PLAN_OPTIONS: Array<{
   label: string;
   badge?: string;
   price: number;
-  interval: 'Month' | 'Year' | 'One-Time';
+  interval: 'Month' | 'Year';
   note: string;
 }> = [
   { id: 'monthly', label: 'Monthly', price: BILLING_PLANS.monthly.amount, interval: 'Month', note: 'Billed monthly' },
