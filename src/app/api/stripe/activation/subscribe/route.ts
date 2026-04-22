@@ -317,7 +317,7 @@ async function resolveReusableSubscription(params: {
       paymentIntentId: normalizedInvoicePaymentIntent.paymentIntentId,
       paymentIntentStatus: normalizedInvoicePaymentIntent.paymentIntentStatus,
       billingMode: incompleteSubscription.billing_mode?.type || null,
-      stripeApiVersion: Stripe.PACKAGE_VERSION || null,
+      stripeApiVersion: '2025-04-30.basil',
     });
 
     return {
@@ -339,7 +339,7 @@ async function resolveReusableSubscription(params: {
     paymentIntentId: normalizedInvoicePaymentIntent.paymentIntentId,
     paymentIntentStatus: normalizedInvoicePaymentIntent.paymentIntentStatus,
     billingMode: incompleteSubscription.billing_mode?.type || null,
-    stripeApiVersion: Stripe.PACKAGE_VERSION || null,
+    stripeApiVersion: '2025-04-30.basil',
   });
 
   await stripe.subscriptions.cancel(incompleteSubscription.id);
