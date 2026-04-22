@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const stripe = getStripe();
-    const stripeApiVersion = stripe.getApiField('version') || null;
+    const stripeApiVersion = '2025-04-30.basil';
     const { plan, useDefaultPaymentMethod, paymentMethodId } = (await request.json()) as {
       plan?: string;
       useDefaultPaymentMethod?: boolean;
