@@ -616,7 +616,7 @@ export function ActivationDialog({
       console.error('[billing][activation-dialog] Client payment confirmation failed', {
         clientConfirmationTriggered: true,
         confirmationTokenType,
-        finalPostConfirmationStatus: result.paymentIntent?.status || null,
+        finalPostConfirmationStatus: (result as any).paymentIntent?.status || null,
         error: result.error.message || 'Payment authentication failed',
       });
       throw new Error(result.error.message || 'Payment authentication failed');
@@ -625,11 +625,11 @@ export function ActivationDialog({
     console.info('[billing][activation-dialog] Client payment confirmation completed', {
       clientConfirmationTriggered: true,
       confirmationTokenType,
-      finalPostConfirmationStatus: result.paymentIntent?.status || null,
-      paymentIntentId: result.paymentIntent?.id || null,
+      finalPostConfirmationStatus: (result as any).paymentIntent?.status || null,
+      paymentIntentId: (result as any).paymentIntent?.id || null,
     });
 
-    return result.paymentIntent;
+    return (result as any).paymentIntent;
   }, []);
 
   const confirmPaymentIntentIfNeeded = useCallback(

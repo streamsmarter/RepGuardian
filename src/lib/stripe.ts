@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 let stripeInstance: Stripe | null = null;
 const useStripeTestMode = process.env.NODE_ENV !== 'production';
-const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2026-02-25.clover';
+const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2026-03-25.dahlia';
 
 function assertStripeKeyPrefix(key: string, expectedPrefix: 'sk_test_' | 'sk_live_' | 'pk_test_' | 'pk_live_') {
   if (!key.startsWith(expectedPrefix)) {

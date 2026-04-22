@@ -84,7 +84,7 @@ export default function ReengagementConditionsPage() {
 
       console.log('Updating reengagement metadata via RPC');
       
-      const { error } = await supabase.rpc('update_reengagement_metadata', {
+      const { error } = await (supabase.rpc as any)('update_reengagement_metadata', {
         p_metadata: {
           message: message,
           preferred_cadence_days: inactivityDays,

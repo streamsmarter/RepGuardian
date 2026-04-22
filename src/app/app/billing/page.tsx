@@ -336,8 +336,7 @@ export default function BillingPage() {
                       ) : null}
                     </div>
                     <p className="mt-1 text-xs">
-                      ${plan.price.toFixed(2)}
-                      {plan.interval === 'One-Time' ? '' : ` / ${plan.interval}`}
+                      ${plan.price.toFixed(2)} / {plan.interval}
                     </p>
                   </button>
                 );
@@ -367,7 +366,7 @@ export default function BillingPage() {
                       ${activePlanOption.price.toFixed(2)}
                     </span>
                     <span className="text-sm uppercase tracking-widest text-muted-foreground">
-                      {activePlanOption.interval === 'One-Time' ? '' : ` / ${activePlanOption.interval}`}
+                      {` / ${activePlanOption.interval}`}
                     </span>
                   </div>
                   <p
