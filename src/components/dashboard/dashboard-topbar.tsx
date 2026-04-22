@@ -72,6 +72,7 @@ export function DashboardTopbar() {
   const supabase = createBrowserComponentClient();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [userInitials, setUserInitials] = useState<string>('');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const { isCollapsed } = useSidebar();
 
@@ -93,6 +94,14 @@ export function DashboardTopbar() {
           .single() as { data: { company_id: string; name: string | null } | null };
         if (appUser?.company_id) {
           setCompanyId(appUser.company_id);
+
+          const { data: company } = await supabase
+            .from('company')
+            .select('subscription_status')
+            .eq('id', appUser.company_id)
+            .single() as { data: { subscription_status: string | null } | null };
+
+          setSubscriptionStatus(company?.subscription_status || null);
         }
         if (appUser?.name) {
           const names = appUser.name.trim().split(' ');
@@ -132,6 +141,16 @@ export function DashboardTopbar() {
     <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-end items-center px-8 border-b border-[#1a1919] text-sm transition-all duration-300 ${isCollapsed ? 'w-[calc(100%-5rem)]' : 'w-[calc(100%-16rem)]'}`}>
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4 text-gray-400">
+          {/* Subscription Status Badge */}
+          {mounted && (subscriptionStatus === 'active' || subscriptionStatus?.includes('trial')) && (
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              subscriptionStatus === 'active' 
+                ? 'bg-primary/10 text-primary border border-primary/20' 
+                : 'bg-secondary/10 text-secondary border border-secondary/20'
+            }`}>
+              {subscriptionStatus === 'active' ? 'Pro' : 'Trial'}
+            </span>
+          )}
           {/* Notifications Dropdown */}
           {mounted ? (
             <DropdownMenu>

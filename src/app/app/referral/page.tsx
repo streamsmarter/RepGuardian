@@ -264,6 +264,8 @@ export default function ReferralPage() {
             <ChannelPerformanceChart 
               clicksCount={campaign?.clicks_count || 0}
               conversionsCount={campaign?.clients_count || 0}
+              clickThroughRate={campaign?.click_through_rate || 0}
+              conversionRate={campaign?.conversion_rate || 0}
             />
 
             {/* Row 3: Participant Table */}

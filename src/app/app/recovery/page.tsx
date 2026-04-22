@@ -90,7 +90,7 @@ export default function RecoveryPage() {
               Win back at-risk customers with targeted recovery campaigns and personalized outreach.
             </p>
           </div>
-          <Link href="/create-program">
+          <Link href="/app/recovery/conditions">
             <Button className="bg-gradient-to-br from-primary to-[#06b77f] px-6 py-3 rounded-lg text-[#002919] font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(105,246,184,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
               <Settings className="w-5 h-5" />
               Edit Conditions

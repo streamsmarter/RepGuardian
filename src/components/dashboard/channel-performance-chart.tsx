@@ -3,6 +3,8 @@
 interface ChannelPerformanceChartProps {
   clicksCount?: number;
   conversionsCount?: number;
+  clickThroughRate?: number;
+  conversionRate?: number;
 }
 
 // Create smooth curve using cubic bezier (Catmull-Rom spline)
@@ -23,7 +25,7 @@ const smoothPath = (pts: {x: number, y: number}[]) => {
   return path;
 };
 
-export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0 }: ChannelPerformanceChartProps) {
+export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0, clickThroughRate = 0, conversionRate = 0 }: ChannelPerformanceChartProps) {
   const totalClicks = clicksCount;
   const totalConversions = conversionsCount;
 
@@ -63,13 +65,13 @@ export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#8596ff]"></span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Clicks</span>
-            <span className="text-sm font-bold text-[#8596ff]">{totalClicks}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">Click Through Rate</span>
+            <span className="text-sm font-bold text-[#8596ff]">{(clickThroughRate * 100).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-primary"></span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Conversions</span>
-            <span className="text-sm font-bold text-primary">{totalConversions}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">Conversion Rate</span>
+            <span className="text-sm font-bold text-primary">{(conversionRate * 100).toFixed(1)}%</span>
           </div>
         </div>
       </div>

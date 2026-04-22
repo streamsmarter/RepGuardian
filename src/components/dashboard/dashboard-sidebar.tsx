@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/lib/sidebar-context';
+import { createBrowserComponentClient } from '@/lib/supabase/client';
 import {
   LayoutDashboard,
   Inbox,
@@ -27,6 +29,38 @@ const navItems = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed } = useSidebar();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const supabase = createBrowserComponentClient();
+
+  useEffect(() => {
+    const getSubscriptionStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return;
+
+        const { data: appUser } = await supabase
+          .from('app_user')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single() as { data: { company_id: string } | null };
+
+        if (appUser?.company_id) {
+          const { data: company } = await supabase
+            .from('company')
+            .select('subscription_status')
+            .eq('id', appUser.company_id)
+            .single() as { data: { subscription_status: string | null } | null };
+
+          setSubscriptionStatus(company?.subscription_status || null);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    getSubscriptionStatus();
+  }, [supabase]);
+
+  const isActiveSubscription = subscriptionStatus === 'active';
 
   return (
     <aside 
@@ -82,24 +116,15 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      <div className={cn(isCollapsed ? "p-2" : "p-6")}>
-        {isCollapsed ? (
-          <Link href="/app/billing">
-            <Button 
-              className="w-full h-10 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all p-0"
-              title="Upgrade to Pro"
-            >
-              <Shield className="w-4 h-4" />
-            </Button>
-          </Link>
-        ) : (
+      {!isCollapsed && !isActiveSubscription && (
+        <div className="p-6">
           <Link href="/app/billing">
             <Button className="w-full py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all">
               Upgrade to Pro
             </Button>
           </Link>
-        )}
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

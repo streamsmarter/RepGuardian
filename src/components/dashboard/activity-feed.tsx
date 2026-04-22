@@ -30,6 +30,7 @@ type UpdateRow = {
   body?: string | null;
   update_title?: string | null;
   update_text?: string | null;
+  update_color?: string | null;
 };
 
 const iconMap = {
@@ -38,12 +39,11 @@ const iconMap = {
   low_sentiment: { icon: Frown, bgColor: 'bg-destructive/10', iconColor: 'text-destructive' },
 };
 
-function normalizeType(u: UpdateRow): ActivityItem['type'] {
-  const s = (u.type ?? u.severity ?? u.level ?? u.status ?? '').toLowerCase();
-  if (s.includes('ai') || s.includes('auto') || s.includes('response')) return 'ai_response';
-  if (s.includes('review') || s.includes('new') || s.includes('success')) return 'new_review';
-  if (s.includes('low') || s.includes('negative') || s.includes('conflict') || s.includes('warning') || s.includes('attention')) return 'low_sentiment';
-  return 'new_review'; // default
+function normalizeType(color: string | null): ActivityItem['type'] {
+  const s = (color ?? '').toLowerCase();
+  if (s.includes('green') || s.includes('success') || s.includes('ai') || s.includes('auto') || s.includes('response')) return 'ai_response';
+  if (s.includes('red') || s.includes('critical') || s.includes('negative') || s.includes('conflict') || s.includes('warning') || s.includes('attention')) return 'low_sentiment';
+  return 'new_review'; // default - yellow/secondary
 }
 
 function timeAgo(iso?: string | null) {
@@ -68,7 +68,7 @@ function rowToItem(u: UpdateRow): ActivityItem {
   const rawTitle = (u.update_title ?? u.title ?? u.message ?? '').trim();
   const title = !rawTitle || rawTitle.toLowerCase() === 'update' ? (fallbackText || 'Update') : rawTitle;
   const description = u.update_text ?? u.description ?? u.body ?? '';
-  const type = normalizeType(u);
+  const type = normalizeType(u.update_color ?? null);
 
   return {
     id: u.id,
