@@ -47,7 +47,7 @@ interface ParticipantTableProps {
   campaignId?: string | null;
 }
 
-type TabType = 'participants' | 'referred';
+type TabType = 'participants' | 'referred' | 'pending';
 
 const getInitials = (firstName: string | null, lastName: string | null): string => {
   const first = firstName?.charAt(0)?.toUpperCase() || '';
@@ -258,9 +258,32 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
     );
   }
 
+  // Filter pending referrals (participants with clicks but no customers yet)
+  const pendingReferrals = useMemo(() => {
+    if (!recipients) return [];
+    return recipients.filter((recipient) => {
+      const clicks = parseInt(recipient.link?.click_count || '0', 10);
+      const customers = parseInt(recipient.link?.customer_count || '0', 10);
+      return clicks > 0 && customers === 0;
+    }).filter((recipient) => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const name = [recipient.client?.first_name, recipient.client?.last_name].filter(Boolean).join(' ').toLowerCase();
+        const email = (recipient.client?.email || '').toLowerCase();
+        const phone = (recipient.client?.phone_number || '').toLowerCase();
+        if (!name.includes(query) && !email.includes(query) && !phone.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [recipients, searchQuery]);
+
   const hasNoData = activeTab === 'participants' 
     ? (!recipients || recipients.length === 0)
-    : (!referredClients || referredClients.length === 0);
+    : activeTab === 'referred'
+    ? (!referredClients || referredClients.length === 0)
+    : pendingReferrals.length === 0;
 
   return (
     <div className="col-span-12 bg-[#1a1919] rounded-xl overflow-hidden">
@@ -296,6 +319,18 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
             >
               Referred Clients
             </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('pending'); setSearchQuery(''); }}
+              className={cn(
+                'px-4 py-2 rounded-md text-sm font-bold transition-colors',
+                activeTab === 'pending'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Pending Referrals
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -303,7 +338,7 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder={activeTab === 'participants' ? 'Search participants...' : 'Search referred clients...'}
+              placeholder={activeTab === 'participants' ? 'Search participants...' : activeTab === 'referred' ? 'Search referred clients...' : 'Search pending referrals...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2 rounded bg-black border-none focus-visible:ring-1 focus-visible:ring-primary text-sm w-64 placeholder:text-muted-foreground/50"
@@ -325,7 +360,9 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
           <p className="text-muted-foreground text-sm">
             {activeTab === 'participants' 
               ? 'No participants yet. Send referral invites to see them here.'
-              : 'No referred clients yet. Clients who were referred will appear here.'}
+              : activeTab === 'referred'
+              ? 'No referred clients yet. Clients who were referred will appear here.'
+              : 'No pending referrals. Referrals with clicks but no conversions will appear here.'}
           </p>
         </div>
       ) : activeTab === 'participants' ? (
@@ -423,7 +460,7 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
             </div>
           )}
         </>
-      ) : (
+      ) : activeTab === 'referred' ? (
         <>
           {/* Referred Clients Table */}
           <div className="overflow-x-auto">
@@ -504,7 +541,84 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
             </div>
           )}
         </>
-      )}
+      ) : activeTab === 'pending' ? (
+        <>
+          {/* Pending Referrals Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-[#131313]">
+                <tr>
+                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Referrer
+                  </th>
+                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">
+                    Clicks
+                  </th>
+                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">
+                    Submissions
+                  </th>
+                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Contact
+                  </th>
+                  <th className="px-8 py-4"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#484847]/5">
+                {pendingReferrals.map((recipient, index) => {
+                  const initials = getInitials(recipient.client?.first_name || null, recipient.client?.last_name || null);
+                  const name = [recipient.client?.first_name, recipient.client?.last_name].filter(Boolean).join(' ') || 'Unknown';
+                  const clicks = parseInt(recipient.link?.click_count || '0', 10);
+                  const submissions = parseInt(recipient.link?.submission_count || '0', 10);
+                  const contact = recipient.client?.email || recipient.client?.phone_number || 'No contact';
+
+                  return (
+                    <tr
+                      key={recipient.id}
+                      className="hover:bg-[#201f1f] transition-colors cursor-pointer group"
+                    >
+                      <td className="px-8 py-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs',
+                              avatarColors[index % avatarColors.length]
+                            )}
+                          >
+                            {initials}
+                          </div>
+                          <p className="text-sm font-bold">{name}</p>
+                        </div>
+                      </td>
+                      <td className="px-8 py-4 text-center">
+                        <span className="text-sm font-bold text-secondary">{clicks}</span>
+                      </td>
+                      <td className="px-8 py-4 text-center">
+                        <span className="text-sm font-bold">{submissions}</span>
+                      </td>
+                      <td className="px-8 py-4">
+                        <span className="text-sm text-muted-foreground">{contact}</span>
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          {pendingReferrals.length > 10 && (
+            <div className="p-4 bg-[#131313] flex justify-center">
+              <button className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                Load more pending referrals
+                <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </>
+      ) : null}
     </div>
   );
 }

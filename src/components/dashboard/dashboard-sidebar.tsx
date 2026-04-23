@@ -65,7 +65,7 @@ export function DashboardSidebar() {
   return (
     <aside 
       className={cn(
-        "flex flex-col h-screen fixed left-0 top-0 z-50 border-r border-[#1a1919] bg-[#0e0e0e]/80 backdrop-blur-xl font-sans tracking-tight transition-all duration-300",
+        "hidden md:flex flex-col h-screen fixed left-0 top-0 z-50 border-r border-[#1a1919] bg-[#0e0e0e]/80 backdrop-blur-xl font-sans tracking-tight transition-all duration-300",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
