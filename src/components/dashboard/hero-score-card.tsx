@@ -20,7 +20,7 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
   const competitorPercent = Math.max(0, Math.min(99, reputationPercent - 6)); // Simulated competitor comparison
 
   return (
-    <div className="col-span-12 lg:col-span-5 bg-[#1a1919] rounded-2xl p-8 relative overflow-hidden flex flex-col justify-between">
+    <div className="col-span-1 md:col-span-12 lg:col-span-5 bg-[#1a1919] rounded-2xl p-6 md:p-8 relative overflow-hidden flex flex-col justify-between">
       <div className="relative z-10">
         <div className="flex justify-between items-start">
           <span className="text-muted-foreground text-[10px] tracking-[0.1em] font-bold uppercase">
@@ -30,7 +30,7 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
             {status.label}
           </div>
         </div>
-        <h2 className="text-8xl font-extrabold text-foreground mt-6 tracking-tighter">
+        <h2 className="text-6xl md:text-8xl font-extrabold text-foreground mt-4 md:mt-6 tracking-tighter">
           {reputationPercent}<span className="text-primary text-4xl">%</span>
         </h2>
         <p className="text-muted-foreground mt-4 max-w-xs leading-relaxed">

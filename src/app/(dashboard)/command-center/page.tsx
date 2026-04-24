@@ -54,10 +54,10 @@ export default async function CommandCenterPage() {
   const { company_id } = await getCompanyContext();
   const data = await getCommandCenterData(company_id);
   return (
-    <div className="px-8 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="px-4 md:px-8 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Bento Grid Layout */}
-          <div className="grid grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
             {/* Hero Section: Reputation Score */}
             <HeroScoreCard reputationPercent={data.reputationPercent} />
 

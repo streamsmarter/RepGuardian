@@ -203,9 +203,9 @@ export default function ReferralPage() {
 
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 md:px-8 py-6 md:py-8">
           {/* Header Section */}
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-10">
             <div>
               <h2 className="text-4xl font-extrabold tracking-tighter text-foreground">
                 Referral Program
@@ -242,9 +242,9 @@ export default function ReferralPage() {
           </div>
 
           {/* Bento Grid Layout */}
-          <div className="grid grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
             {/* Row 1: Conversion Funnel + Reward Config (stacked) | Financial Impact */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+            <div className="col-span-1 md:col-span-12 lg:col-span-8 flex flex-col gap-4 md:gap-6">
               <ConversionFunnel stats={funnelStats || undefined} />
               <RewardConfigCard
                 referrerReward={formatRewardAmount(program?.referrer_reward_amount, program?.referrer_reward_type)}

@@ -11,7 +11,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#0e0e0e] text-white">
       <DashboardSidebar />
       <DashboardTopbar />
-      <main className={`pt-16 min-h-screen transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+      <main className={`pt-16 min-h-screen transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         {children}
       </main>
     </div>

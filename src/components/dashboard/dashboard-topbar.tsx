@@ -3,8 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, AlertTriangle, CheckCircle2, Clock, Info } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, AlertTriangle, CheckCircle2, Clock, Info, Menu, X, LayoutDashboard, Inbox, MessageSquareText, UserPlus, HeartHandshake, Shield } from 'lucide-react';
 import { useSidebar } from '@/lib/sidebar-context';
+import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
 import {
@@ -67,13 +69,23 @@ const getIcon = (type: UpdateType) => {
   }
 };
 
+const mobileNavItems = [
+  { href: '/command-center', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/app/inbox', label: 'Inbox', icon: Inbox },
+  { href: '/app/reviews', label: 'Reviews', icon: MessageSquareText },
+  { href: '/app/referral', label: 'Referrals', icon: UserPlus },
+  { href: '/app/recovery', label: 'Reengagement', icon: HeartHandshake },
+];
+
 export function DashboardTopbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createBrowserComponentClient();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [userInitials, setUserInitials] = useState<string>('');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isCollapsed } = useSidebar();
 
   useEffect(() => {
@@ -138,8 +150,28 @@ export function DashboardTopbar() {
   const hasUnreadUpdates = updates?.some((update: any) => update.read_status === false) ?? false;
 
   return (
-    <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-end items-center px-8 border-b border-[#1a1919] text-sm transition-all duration-300 ${isCollapsed ? 'w-[calc(100%-5rem)]' : 'w-[calc(100%-16rem)]'}`}>
-      <div className="flex items-center gap-6">
+    <>
+    <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-[#1a1919] text-sm transition-all duration-300 w-full md:${isCollapsed ? 'w-[calc(100%-5rem)]' : 'w-[calc(100%-16rem)]'}`}>
+      {/* Mobile Menu Button & Logo */}
+      <div className="flex items-center gap-3 md:hidden">
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 hover:bg-[#1a1919] rounded-lg transition-colors"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
+            <Shield className="w-3.5 h-3.5 text-[#002919]" />
+          </div>
+          <span className="text-base font-bold text-primary">RepGuardian</span>
+        </div>
+      </div>
+      
+      {/* Desktop spacer */}
+      <div className="hidden md:block" />
+      
+      <div className="flex items-center gap-4 md:gap-6">
         <div className="flex items-center gap-4 text-gray-400">
           {/* Subscription Status Badge */}
           {mounted && (subscriptionStatus === 'active' || subscriptionStatus?.includes('trial')) && (
@@ -214,5 +246,44 @@ export function DashboardTopbar() {
         </div>
       </div>
     </header>
+
+    {/* Mobile Navigation Menu */}
+    {mobileMenuOpen && (
+      <div className="fixed inset-0 top-16 z-30 bg-[#0e0e0e] md:hidden">
+        <nav className="flex flex-col p-4 space-y-1">
+          {mobileNavItems.map((item) => {
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'text-primary bg-[#201f1f] font-semibold'
+                    : 'text-[#e6e1e1] hover:text-white hover:bg-[#201f1f]'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+          
+          {/* Billing link for mobile */}
+          {subscriptionStatus !== 'active' && (
+            <Link
+              href="/app/billing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold rounded-lg"
+            >
+              Upgrade to Pro
+            </Link>
+          )}
+        </nav>
+      </div>
+    )}
+    </>
   );
 }

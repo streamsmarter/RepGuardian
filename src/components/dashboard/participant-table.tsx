@@ -286,62 +286,62 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
     : pendingReferrals.length === 0;
 
   return (
-    <div className="col-span-12 bg-[#1a1919] rounded-xl overflow-hidden">
+    <div className="col-span-1 md:col-span-12 bg-[#1a1919] rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="p-8 flex items-center justify-between border-b border-[#484847]/10">
+      <div className="p-4 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#484847]/10">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
             Participant Performance
           </h3>
           {/* Tabs */}
-          <div className="flex items-center gap-1 bg-[#131313] rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-[#131313] rounded-lg p-1 overflow-x-auto">
             <button
               type="button"
               onClick={() => { setActiveTab('participants'); setSearchQuery(''); }}
               className={cn(
-                'px-4 py-2 rounded-md text-sm font-bold transition-colors',
+                'px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-colors whitespace-nowrap',
                 activeTab === 'participants'
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Referral Participants
+              Participants
             </button>
             <button
               type="button"
               onClick={() => { setActiveTab('referred'); setSearchQuery(''); }}
               className={cn(
-                'px-4 py-2 rounded-md text-sm font-bold transition-colors',
+                'px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-colors whitespace-nowrap',
                 activeTab === 'referred'
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Referred Clients
+              Referred
             </button>
             <button
               type="button"
               onClick={() => { setActiveTab('pending'); setSearchQuery(''); }}
               className={cn(
-                'px-4 py-2 rounded-md text-sm font-bold transition-colors',
+                'px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold transition-colors whitespace-nowrap',
                 activeTab === 'pending'
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Pending Referrals
+              Pending
             </button>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder={activeTab === 'participants' ? 'Search participants...' : activeTab === 'referred' ? 'Search referred clients...' : 'Search pending referrals...'}
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded bg-black border-none focus-visible:ring-1 focus-visible:ring-primary text-sm w-64 placeholder:text-muted-foreground/50"
+              className="pl-10 pr-4 py-2 rounded bg-black border-none focus-visible:ring-1 focus-visible:ring-primary text-sm w-full md:w-64 placeholder:text-muted-foreground/50"
             />
             {searchQuery && (
               <button 

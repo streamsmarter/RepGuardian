@@ -224,8 +224,8 @@ export default function BillingPage() {
       />
 
       <section className="relative z-10 mx-auto max-w-5xl">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-5xl font-extrabold tracking-tighter md:text-6xl">
+        <div className="mb-8 md:mb-16 text-center">
+          <h2 className="mb-4 text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter">
             RepGuardian Subscription
           </h2>
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
@@ -235,13 +235,13 @@ export default function BillingPage() {
         </div>
 
         {hasManageableSubscription ? (
-          <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#1a1919] p-8">
+          <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#1a1919] p-4 md:p-8">
             <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/5 blur-[80px]" />
             <div className="relative">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <div className="mb-2 flex items-center gap-3">
-                    <h3 className="text-xl font-bold">Current Subscription</h3>
+                  <div className="mb-2 flex flex-wrap items-center gap-2 md:gap-3">
+                    <h3 className="text-lg md:text-xl font-bold">Current Subscription</h3>
                     {getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
                   </div>
                   <p className="text-sm text-muted-foreground">

@@ -453,11 +453,11 @@ export function ReviewsPageClient({
   );
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       {/* Intelligence Command Dashboard */}
       <section>
         {/* Main Intelligence Panel */}
-        <div className="bg-[#101111] rounded-xl relative overflow-hidden border border-[#2d3436] flex flex-col p-8"
+        <div className="bg-[#101111] rounded-xl relative overflow-hidden border border-[#2d3436] flex flex-col p-4 md:p-8"
           style={{
             backgroundImage: 'radial-gradient(circle, rgba(105, 246, 184, 0.05) 1px, transparent 1px)',
             backgroundSize: '20px 20px',
@@ -490,11 +490,11 @@ export function ReviewsPageClient({
           </div>
 
           {/* Data Visualization Layout */}
-          <div className="grid grid-cols-12 gap-8 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 mt-6 md:mt-8">
             <GoogleRatingGaugeCard rating={averageGoogleRating} isLoading={reviewsLoading} />
 
             {/* Middle: Tagged Intelligence (Strengths/Weaknesses) */}
-            <div className="col-span-6 grid grid-cols-2 gap-6 items-center">
+            <div className="col-span-1 md:col-span-6 grid grid-cols-2 gap-4 md:gap-6 items-center">
               {/* Strengths */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-primary uppercase tracking-[0.15em] flex items-center gap-2">

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ConversationList } from '@/components/conversation-list';
 import { MessageThread } from '@/components/message-thread';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowLeft } from 'lucide-react';
 
 interface InboxClientProps {
   companyId: string;
@@ -13,21 +13,43 @@ interface InboxClientProps {
 export function InboxClient({ companyId, initialChatId }: InboxClientProps) {
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>(initialChatId);
 
+  const handleSelectChat = (chatId: string) => {
+    setSelectedChatId(chatId);
+  };
+
+  const handleBackToList = () => {
+    setSelectedChatId(undefined);
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Conversations List - Left Side */}
-      <section className="w-80 lg:w-96 flex flex-col bg-[#1a1919] border-r border-white/5 shrink-0">
+      {/* Conversations List - Left Side (hidden on mobile when chat selected) */}
+      <section className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-col bg-[#1a1919] border-r border-white/5 md:shrink-0`}>
         <ConversationList 
           companyId={companyId} 
           selectedChatId={selectedChatId}
-          onSelectChat={setSelectedChatId}
+          onSelectChat={handleSelectChat}
         />
       </section>
       
-      {/* Message Thread - Right Side */}
-      <section className="hidden md:flex flex-1 flex-col bg-[#0e0e0e] relative overflow-hidden">
+      {/* Message Thread - Right Side (full width on mobile when chat selected) */}
+      <section className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-[#0e0e0e] relative overflow-hidden`}>
         {selectedChatId ? (
-          <MessageThread chatId={selectedChatId} companyId={companyId} />
+          <div className="flex flex-col h-full">
+            {/* Mobile back button */}
+            <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[#1a1919]">
+              <button
+                onClick={handleBackToList}
+                className="p-2 hover:bg-[#201f1f] rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <span className="font-semibold">Back to conversations</span>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <MessageThread chatId={selectedChatId} companyId={companyId} />
+            </div>
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center p-8">
