@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
@@ -10,15 +10,56 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createBrowserComponentClient();
+
+  useEffect(() => {
+    const handleAuthFromHash = async () => {
+      // Check if there's a hash fragment with auth tokens (PKCE flow)
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && type === 'recovery') {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+
+          if (error) {
+            setSessionError(error.message);
+            return;
+          }
+
+          // Clear the hash from URL
+          window.history.replaceState(null, '', window.location.pathname);
+          setIsSessionReady(true);
+          return;
+        }
+      }
+
+      // Check if user already has a valid session (came from /auth/callback)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsSessionReady(true);
+      } else {
+        setSessionError('No valid session found. Please request a new password reset link.');
+      }
+    };
+
+    handleAuthFromHash();
+  }, [supabase.auth]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +93,42 @@ export default function ResetPasswordPage() {
       setIsLoading(false);
     }
   };
+
+  if (sessionError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Link expired</CardTitle>
+            <CardDescription>
+              {sessionError}
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button className="w-full" onClick={() => router.push('/forgot-password')}>
+              Request new reset link
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isSessionReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+            <CardTitle className="text-xl font-bold mt-4">Verifying link...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
