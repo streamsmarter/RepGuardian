@@ -43,6 +43,13 @@ interface ReferredClient {
   };
 }
 
+interface PendingReferral {
+  id: string;
+  referred_phone_number: string | null;
+  created_at: string | null;
+  status: string | null;
+}
+
 interface ParticipantTableProps {
   campaignId?: string | null;
 }
@@ -203,6 +210,27 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
     enabled: !!companyId,
   });
 
+  // Fetch pending referrals (referrals with status 'new person')
+  const { data: pendingReferralsData, isLoading: isLoadingPending } = useQuery({
+    queryKey: ['pending-referrals', companyId],
+    queryFn: async () => {
+      if (!companyId) return [];
+
+      const { data, error } = await (supabase.from('referral') as any)
+        .select('id, referred_phone_number, created_at, status')
+        .eq('company_id', companyId)
+        .eq('status', 'new person');
+
+      if (error) {
+        console.error('Error fetching pending referrals:', error);
+        return [];
+      }
+
+      return data as PendingReferral[];
+    },
+    enabled: !!companyId,
+  });
+
   // Filter and search recipients
   const filteredRecipients = useMemo(() => {
     if (!recipients) return [];
@@ -243,28 +271,22 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
     });
   }, [referredClients, searchQuery]);
 
-  // Filter pending referrals (participants with clicks but no customers yet)
-  const pendingReferrals = useMemo(() => {
-    if (!recipients) return [];
-    return recipients.filter((recipient) => {
-      const clicks = parseInt(recipient.link?.click_count || '0', 10);
-      const customers = parseInt(recipient.link?.customer_count || '0', 10);
-      return clicks > 0 && customers === 0;
-    }).filter((recipient) => {
+  // Filter pending referrals by search query
+  const filteredPendingReferrals = useMemo(() => {
+    if (!pendingReferralsData) return [];
+    return pendingReferralsData.filter((referral) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const name = [recipient.client?.first_name, recipient.client?.last_name].filter(Boolean).join(' ').toLowerCase();
-        const email = (recipient.client?.email || '').toLowerCase();
-        const phone = (recipient.client?.phone_number || '').toLowerCase();
-        if (!name.includes(query) && !email.includes(query) && !phone.includes(query)) {
+        const phone = (referral.referred_phone_number || '').toLowerCase();
+        if (!phone.includes(query)) {
           return false;
         }
       }
       return true;
     });
-  }, [recipients, searchQuery]);
+  }, [pendingReferralsData, searchQuery]);
 
-  const isLoadingData = activeTab === 'participants' ? isLoading : isLoadingReferred;
+  const isLoadingData = activeTab === 'participants' ? isLoading : activeTab === 'referred' ? isLoadingReferred : isLoadingPending;
 
   if (isLoadingData) {
     return (
@@ -283,7 +305,7 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
     ? (!recipients || recipients.length === 0)
     : activeTab === 'referred'
     ? (!referredClients || referredClients.length === 0)
-    : pendingReferrals.length === 0;
+    : filteredPendingReferrals.length === 0;
 
   return (
     <div className="col-span-1 md:col-span-12 bg-[#1a1919] rounded-xl overflow-hidden">
@@ -549,54 +571,34 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
               <thead className="bg-[#131313]">
                 <tr>
                   <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Referrer
-                  </th>
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">
-                    Clicks
-                  </th>
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">
-                    Submissions
+                    Phone Number
                   </th>
                   <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Contact
+                    Date Created
                   </th>
                   <th className="px-8 py-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#484847]/5">
-                {pendingReferrals.map((recipient, index) => {
-                  const initials = getInitials(recipient.client?.first_name || null, recipient.client?.last_name || null);
-                  const name = [recipient.client?.first_name, recipient.client?.last_name].filter(Boolean).join(' ') || 'Unknown';
-                  const clicks = parseInt(recipient.link?.click_count || '0', 10);
-                  const submissions = parseInt(recipient.link?.submission_count || '0', 10);
-                  const contact = recipient.client?.email || recipient.client?.phone_number || 'No contact';
+                {filteredPendingReferrals.map((referral) => {
+                  const createdAt = referral.created_at 
+                    ? new Date(referral.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })
+                    : 'Unknown';
 
                   return (
                     <tr
-                      key={recipient.id}
+                      key={referral.id}
                       className="hover:bg-[#201f1f] transition-colors cursor-pointer group"
                     >
                       <td className="px-8 py-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              'w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs',
-                              avatarColors[index % avatarColors.length]
-                            )}
-                          >
-                            {initials}
-                          </div>
-                          <p className="text-sm font-bold">{name}</p>
-                        </div>
-                      </td>
-                      <td className="px-8 py-4 text-center">
-                        <span className="text-sm font-bold text-secondary">{clicks}</span>
-                      </td>
-                      <td className="px-8 py-4 text-center">
-                        <span className="text-sm font-bold">{submissions}</span>
+                        <span className="text-sm font-bold">{referral.referred_phone_number || 'No phone'}</span>
                       </td>
                       <td className="px-8 py-4">
-                        <span className="text-sm text-muted-foreground">{contact}</span>
+                        <span className="text-sm text-muted-foreground">{createdAt}</span>
                       </td>
                       <td className="px-8 py-4 text-right">
                         <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
@@ -609,7 +611,7 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
           </div>
 
           {/* Footer */}
-          {pendingReferrals.length > 10 && (
+          {filteredPendingReferrals.length > 10 && (
             <div className="p-4 bg-[#131313] flex justify-center">
               <button className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                 Load more pending referrals
