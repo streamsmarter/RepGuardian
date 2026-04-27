@@ -152,26 +152,26 @@ export function DashboardTopbar() {
   return (
     <>
     <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-[#1a1919] text-sm transition-all duration-300 w-full ${isCollapsed ? 'md:w-[calc(100%-5rem)]' : 'md:w-[calc(100%-16rem)]'}`}>
-      {/* Mobile Menu Button & Logo */}
-      <div className="flex items-center gap-3 md:hidden">
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 hover:bg-[#1a1919] rounded-lg transition-colors"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
-            <Shield className="w-3.5 h-3.5 text-[#002919]" />
-          </div>
-          <span className="text-base font-bold text-primary">StreamSmarter</span>
+      {/* Mobile Logo (left) */}
+      <div className="flex items-center gap-2 md:hidden">
+        <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
+          <Shield className="w-3.5 h-3.5 text-[#002919]" />
         </div>
+        <span className="text-base font-bold text-primary">StreamSmarter</span>
       </div>
       
       {/* Desktop spacer */}
       <div className="hidden md:block" />
       
-      <div className="flex items-center gap-4 md:gap-6">
+      {/* Mobile Menu Button (right) */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="p-2 hover:bg-[#1a1919] rounded-lg transition-colors md:hidden"
+      >
+        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+      
+      <div className="hidden md:flex items-center gap-4 md:gap-6">
         <div className="flex items-center gap-4 text-gray-400">
           {/* Subscription Status Badge */}
           {mounted && (subscriptionStatus === 'active' || subscriptionStatus?.includes('trial')) && (
