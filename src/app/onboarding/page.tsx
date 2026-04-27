@@ -118,7 +118,7 @@ export default function OnboardingPage() {
         throw new Error(appUserError.message || appUserError.code || 'Failed to create user profile. Check RLS policies for app_user table.');
       }
 
-      toast.success('Welcome to RepGuardian!');
+      toast.success('Welcome to StreamSmarter!');
       router.push('/app');
       router.refresh();
     } catch (error: unknown) {

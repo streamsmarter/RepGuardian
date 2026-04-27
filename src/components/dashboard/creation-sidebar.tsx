@@ -40,7 +40,7 @@ export function CreationSidebar() {
               <Shield className="w-5 h-5 text-[#002919]" />
             </div>
             <div>
-              <h1 className="text-primary font-black tracking-tighter text-xl">RepGuardian</h1>
+              <h1 className="text-primary font-black tracking-tighter text-xl">StreamSmarter</h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 Sentinel AI
               </p>

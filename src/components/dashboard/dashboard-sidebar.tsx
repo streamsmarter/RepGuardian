@@ -74,7 +74,7 @@ export function DashboardSidebar() {
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-[#002919]" />
           </div>
-          {!isCollapsed && <h1 className="text-xl font-bold text-primary">RepGuardian</h1>}
+          {!isCollapsed && <h1 className="text-xl font-bold text-primary">StreamSmarter</h1>}
         </div>
         {!isCollapsed && (
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1 px-1 opacity-60">

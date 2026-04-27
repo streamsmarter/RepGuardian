@@ -4,8 +4,8 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RepGuardian",
-  description: "Reputation and conversation operations dashboard.",
+  title: "StreamSmarter",
+  description: "AI-powered business growth and customer engagement platform.",
 };
 
 export default function RootLayout({

@@ -226,7 +226,7 @@ export default function BillingPage() {
       <section className="relative z-10 mx-auto max-w-5xl">
         <div className="mb-8 md:mb-16 text-center">
           <h2 className="mb-4 text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter">
-            RepGuardian Subscription
+            StreamSmarter Subscription
           </h2>
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
             Unleash autonomous reputation defense. Deploy the intelligent monolith to secure your
@@ -245,7 +245,7 @@ export default function BillingPage() {
                     {getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {subscription.plan?.name || 'RepGuardian Pro'}
+                    {subscription.plan?.name || 'StreamSmarter Pro'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -357,7 +357,7 @@ export default function BillingPage() {
                       Enterprise Protocol
                     </span>
                   </div>
-                  <h3 className="mb-2 text-4xl font-black italic tracking-tighter">RepGuardian</h3>
+                  <h3 className="mb-2 text-4xl font-black italic tracking-tighter">StreamSmarter</h3>
                   <p className="mb-8 leading-relaxed text-muted-foreground">
                     The complete autonomous suite for high-stakes brand intelligence.
                   </p>

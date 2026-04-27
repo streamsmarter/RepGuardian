@@ -56,7 +56,7 @@ function derivePlan(subscription: SubscriptionRow | null) {
   if (subscription.plans) {
     return {
       ...subscription.plans,
-      name: subscription.plans.name || planFromPrice?.label || 'RepGuardian',
+      name: subscription.plans.name || planFromPrice?.label || 'StreamSmarter',
     };
   }
 

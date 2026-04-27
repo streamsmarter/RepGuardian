@@ -62,16 +62,16 @@ const appPlanIdCache = new Map<BillingPlanKey, { expiresAt: number; planId: stri
 export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
   monthly: {
     key: 'monthly',
-    label: 'RepGuardian Monthly',
-    appPlanName: 'RepGuardian Monthly',
+    label: 'StreamSmarter Monthly',
+    appPlanName: 'StreamSmarter Monthly',
     priceId: getConfiguredPriceId('STRIPE_MONTHLY_PRICE_ID', 'STRIPE_TEST_MONTHLY_PRICE_ID'),
     interval: 'month',
     amount: 49.99,
   },
   annual: {
     key: 'annual',
-    label: 'RepGuardian Annual',
-    appPlanName: 'RepGuardian Annual',
+    label: 'StreamSmarter Annual',
+    appPlanName: 'StreamSmarter Annual',
     priceId: getConfiguredPriceId('STRIPE_ANNUAL_PRICE_ID', 'STRIPE_TEST_ANNUAL_PRICE_ID'),
     interval: 'year',
     amount: 499.99,

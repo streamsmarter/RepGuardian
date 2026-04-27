@@ -125,7 +125,7 @@ export default function SetupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Welcome to RepGuardian</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to StreamSmarter</CardTitle>
           <CardDescription>Let&apos;s set up your company to get started</CardDescription>
         </CardHeader>
         <form onSubmit={handleSetup}>

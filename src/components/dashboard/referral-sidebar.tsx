@@ -41,7 +41,7 @@ export function ReferralSidebar() {
             <Shield className="w-5 h-5 text-[#002919]" />
           </div>
           <div className="flex flex-col">
-            <span className="text-primary font-black tracking-tighter text-xl">RepGuardian</span>
+            <span className="text-primary font-black tracking-tighter text-xl">StreamSmarter</span>
             <span className="text-xs text-muted-foreground font-medium tracking-widest uppercase">
               Sentinel AI
             </span>

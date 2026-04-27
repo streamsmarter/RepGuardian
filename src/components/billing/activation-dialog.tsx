@@ -432,7 +432,7 @@ function SecurePaymentForm({
                       googlePay: 'auto',
                     },
                     business: {
-                      name: 'RepGuardian',
+                      name: 'StreamSmarter',
                     },
                     fields: {
                       billingDetails: {

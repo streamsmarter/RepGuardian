@@ -164,7 +164,7 @@ export function DashboardTopbar() {
           <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
             <Shield className="w-3.5 h-3.5 text-[#002919]" />
           </div>
-          <span className="text-base font-bold text-primary">RepGuardian</span>
+          <span className="text-base font-bold text-primary">StreamSmarter</span>
         </div>
       </div>
       

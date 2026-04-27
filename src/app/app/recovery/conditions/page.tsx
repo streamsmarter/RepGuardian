@@ -112,34 +112,32 @@ export default function ReengagementConditionsPage() {
     .replace('{booking_link}', 'book.example.com/yourshop');
 
   return (
-    <div className="px-8 py-8 min-h-screen" style={{
+    <div className="px-4 md:px-8 py-6 md:py-8 min-h-screen" style={{
       backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(105, 246, 184, 0.05) 1px, transparent 0)',
       backgroundSize: '24px 24px',
     }}>
       {/* Header */}
-      <div className="mb-10">
+      <div className="mb-6 md:mb-10">
         <div className="flex items-center gap-2 mb-2">
           <span className="w-2 h-2 rounded-full bg-primary" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Active</span>
         </div>
-        <h1 className="font-black text-4xl tracking-tight text-white mb-2">Win-Back Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="font-black text-2xl md:text-4xl tracking-tight text-white mb-2">Win-Back Settings</h1>
+        <p className="text-muted-foreground text-sm md:text-base">
           Automatically bring back inactive customers. Set when to reach out and what to say.
         </p>
       </div>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8">
         {/* Left Column - Form */}
-        <div className="col-span-7 space-y-8">
+        <div className="lg:col-span-7 space-y-6 md:space-y-8 order-2 lg:order-1">
           {/* Inactivity Period Card */}
-          <div className="bg-[#1a1919] rounded-2xl p-6 border border-white/5">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold text-white">When to Reach Out</h2>
+          <div className="bg-[#1a1919] rounded-2xl p-4 md:p-6 border border-white/5">
+            <div className="flex items-center gap-3 mb-4 md:mb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
+              <h2 className="text-lg md:text-xl font-bold text-white">When to Reach Out</h2>
             </div>
             
             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 block">
@@ -163,15 +161,15 @@ export default function ReengagementConditionsPage() {
           </div>
 
           {/* Message Card */}
-          <div className="bg-[#1a1919] rounded-2xl p-6 border border-white/5">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-[#1a1919] rounded-2xl p-4 md:p-6 border border-white/5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Your Message</h2>
+                <h2 className="text-lg md:text-xl font-bold text-white">Your Message</h2>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={(e) => { insertVariable('name'); (e.target as HTMLButtonElement).blur(); }}
@@ -228,14 +226,14 @@ export default function ReengagementConditionsPage() {
         </div>
 
         {/* Right Column - Phone Preview */}
-        <div className="col-span-5">
-          <div className="sticky top-8">
+        <div className="lg:col-span-5 order-1 lg:order-2">
+          <div className="lg:sticky lg:top-8">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center mb-4">
               Message Preview
             </p>
             
             {/* iPhone Frame - Dark Mode */}
-            <div className="mx-auto w-[340px] bg-[#1c1c1e] rounded-[3.5rem] p-3 border-[3px] border-[#3a3a3c] shadow-2xl relative">
+            <div className="mx-auto w-full max-w-[340px] bg-[#1c1c1e] rounded-[3.5rem] p-3 border-[3px] border-[#3a3a3c] shadow-2xl relative">
               
               <div className="bg-[#000000] rounded-[3rem] overflow-hidden">
                 {/* iOS Status Bar */}
