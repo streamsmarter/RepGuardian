@@ -188,29 +188,29 @@ export default function EditReferralPage() {
   };
 
   return (
-    <div className="p-10 max-w-6xl mx-auto">
+    <div className="p-4 md:p-10 max-w-6xl mx-auto">
         {/* Header */}
-        <header className="mb-12">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white mt-2">
+        <header className="mb-8 md:mb-12">
+          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white mt-2">
             Edit Referral Program
           </h1>
-          <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+          <p className="text-muted-foreground mt-2 md:mt-3 max-w-2xl leading-relaxed text-sm md:text-base">
             Update the reward mechanics for your referral program. Balanced rewards drive higher
             conversion rates and long-term customer loyalty.
           </p>
         </header>
 
         {/* Reward Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-10 md:mb-16">
           {/* Referrer Reward Column */}
-          <section className="lg:col-span-2 space-y-8">
+          <section className="lg:col-span-2 space-y-6 md:space-y-8">
             {/* Referrer Reward Card */}
-            <div className="bg-[#1a1919] p-8 rounded-lg shadow-2xl">
-              <div className="flex items-center gap-3 mb-8">
+            <div className="bg-[#1a1919] p-4 md:p-8 rounded-lg shadow-2xl">
+              <div className="flex items-center gap-3 mb-6 md:mb-8">
                 <div className="p-2 bg-primary/10 rounded-full">
                   <UserPlus className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg">Referrer Reward</h3>
+                <h3 className="font-bold text-base md:text-lg">Referrer Reward</h3>
               </div>
 
               {/* Selection Cards */}
@@ -220,7 +220,7 @@ export default function EditReferralPage() {
               />
 
               {/* Value Inputs */}
-              <div className="mt-8 pt-8 border-t border-[#484847]/10">
+              <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-[#484847]/10">
                 <div className="space-y-2">
                   <label className="text-muted-foreground text-[11px] tracking-wider uppercase">
                     {getAmountLabel(data.rewards.referrerRewardType)}
@@ -237,12 +237,12 @@ export default function EditReferralPage() {
             </div>
 
             {/* Referred Customer Reward Card */}
-            <div className="bg-[#1a1919] p-8 rounded-lg">
-              <div className="flex items-center gap-3 mb-8">
+            <div className="bg-[#1a1919] p-4 md:p-8 rounded-lg">
+              <div className="flex items-center gap-3 mb-6 md:mb-8">
                 <div className="p-2 bg-secondary/10 rounded-full">
                   <Handshake className="w-5 h-5 text-secondary" />
                 </div>
-                <h3 className="font-bold text-lg">Referred Customer Reward</h3>
+                <h3 className="font-bold text-base md:text-lg">Referred Customer Reward</h3>
               </div>
 
               {/* Selection Cards */}
@@ -252,7 +252,7 @@ export default function EditReferralPage() {
               />
 
               {/* Value Inputs */}
-              <div className="mt-8 pt-8 border-t border-[#484847]/10">
+              <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-[#484847]/10">
                 <div className="space-y-2">
                   <label className="text-muted-foreground text-[11px] tracking-wider uppercase">
                     {getAmountLabel(data.rewards.referredRewardType)}
@@ -267,8 +267,8 @@ export default function EditReferralPage() {
                 </div>
 
                 {/* AI Suggestion */}
-                <div className="mt-6 bg-[#262626]/40 backdrop-blur-xl border border-[#484847]/10 p-4 flex items-center gap-4 rounded-lg">
-                  <Sparkles className="w-8 h-8 text-primary/30 flex-shrink-0" />
+                <div className="mt-4 md:mt-6 bg-[#262626]/40 backdrop-blur-xl border border-[#484847]/10 p-3 md:p-4 flex items-center gap-3 md:gap-4 rounded-lg">
+                  <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-primary/30 flex-shrink-0" />
                   <p className="text-xs text-muted-foreground">
                     Sentinel AI suggests a{' '}
                     <span className="text-primary font-bold">20% discount</span> for this industry
@@ -280,14 +280,14 @@ export default function EditReferralPage() {
           </section>
 
           {/* Summary / Preview Sidebar */}
-          <section className="space-y-6">
+          <section className="space-y-4 md:space-y-6">
             <RewardSummary />
             <TacticalNote />
           </section>
         </div>
 
         {/* Navigation Actions */}
-        <footer className="flex items-center justify-between border-t border-[#484847]/10 pt-8 mt-8">
+        <footer className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 border-t border-[#484847]/10 pt-6 md:pt-8 mt-6 md:mt-8">
           <Link
             href="/app/referral"
             className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors group"
@@ -299,7 +299,7 @@ export default function EditReferralPage() {
           <Button 
             onClick={handleSave}
             disabled={isSaving || isHydrating || data.rewards.referrerAmount <= 0 || data.rewards.referredAmount <= 0}
-            className="px-12 py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-8 md:px-12 py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving || isHydrating ? (
               <>
