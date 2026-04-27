@@ -34,7 +34,7 @@ export default function LoginPage() {
       }
 
       toast.success('Logged in successfully');
-      router.push('/app');
+      router.push('/command-center');
       router.refresh();
     } catch (error: unknown) {
       toast.error((error instanceof Error ? error.message : "Unexpected error") || 'Failed to login');

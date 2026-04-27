@@ -10,11 +10,11 @@ import {
   Inbox,
   MessageSquareText,
   UserPlus,
-  Shield,
   ChevronLeft,
   ChevronRight,
   HeartHandshake,
 } from 'lucide-react';
+import { BrainLogo } from '@/components/brain-logo';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -72,7 +72,7 @@ export function DashboardSidebar() {
       <div className={cn("py-8", isCollapsed ? "px-4" : "px-6")}>
         <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center flex-shrink-0">
-            <Shield className="w-4 h-4 text-[#002919]" />
+            <BrainLogo className="w-7 h-7 text-[#002919]" />
           </div>
           {!isCollapsed && <h1 className="text-xl font-bold text-primary">StreamSmarter</h1>}
         </div>

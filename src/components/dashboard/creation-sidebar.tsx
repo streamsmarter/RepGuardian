@@ -10,8 +10,8 @@ import {
   Settings,
   HelpCircle,
   UserCircle,
-  Shield,
 } from 'lucide-react';
+import { BrainLogo } from '@/components/brain-logo';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -37,7 +37,7 @@ export function CreationSidebar() {
         <div className="px-6 mb-8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded bg-[#06b77f] flex items-center justify-center">
-              <Shield className="w-5 h-5 text-[#002919]" />
+              <BrainLogo className="w-8 h-8 text-[#002919]" />
             </div>
             <div>
               <h1 className="text-primary font-black tracking-tighter text-xl">StreamSmarter</h1>

@@ -11,8 +11,8 @@ import {
   HelpCircle,
   UserCircle,
   Plus,
-  Shield,
 } from 'lucide-react';
+import { BrainLogo } from '@/components/brain-logo';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -38,7 +38,7 @@ export function ReferralSidebar() {
         {/* Logo */}
         <div className="px-6 mb-8 flex items-center gap-3">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center">
-            <Shield className="w-5 h-5 text-[#002919]" />
+            <BrainLogo className="w-8 h-8 text-[#002919]" />
           </div>
           <div className="flex flex-col">
             <span className="text-primary font-black tracking-tighter text-xl">StreamSmarter</span>

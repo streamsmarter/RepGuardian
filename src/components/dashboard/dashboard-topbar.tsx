@@ -4,11 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bell, AlertTriangle, CheckCircle2, Clock, Info, Menu, X, LayoutDashboard, Inbox, MessageSquareText, UserPlus, HeartHandshake, Shield } from 'lucide-react';
+import { Bell, AlertTriangle, CheckCircle2, Clock, Info, Menu, X, LayoutDashboard, Inbox, MessageSquareText, UserPlus, HeartHandshake } from 'lucide-react';
 import { useSidebar } from '@/lib/sidebar-context';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserComponentClient } from '@/lib/supabase/client';
+import { BrainLogo } from '@/components/brain-logo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,7 +156,7 @@ export function DashboardTopbar() {
       {/* Mobile Logo (left) */}
       <div className="flex items-center gap-2 md:hidden">
         <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
-          <Shield className="w-3.5 h-3.5 text-[#002919]" />
+          <BrainLogo className="w-6 h-6 text-[#002919]" />
         </div>
         <span className="text-base font-bold text-primary">StreamSmarter</span>
       </div>

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { AlertTriangle, Bell, CheckCircle2, Clock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import { createBrowserComponentClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { BrainLogo } from '@/components/brain-logo';
 
 type UpdateType = 'critical' | 'warning' | 'info' | 'success';
 
@@ -141,14 +141,10 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-6">
         {/* Left side - Logo and brand name */}
-        <Link href="/app" className="flex items-center gap-2">
-          <Image
-            src="/Logo 1.svg"
-            alt="StreamSmarter Logo"
-            width={30}
-            height={30}
-            className="h-[30px] w-[30px]"
-          />
+        <Link href="/command-center" className="flex items-center gap-2">
+          <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#06b77f]">
+            <BrainLogo className="h-[28px] w-[28px] text-[#002919]" />
+          </div>
           <span className="text-xl font-bold tracking-tight">StreamSmarter</span>
         </Link>
 
@@ -232,7 +228,7 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/app')}>
+                <DropdownMenuItem onClick={() => router.push('/command-center')}>
                   Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/app/inbox')}>
