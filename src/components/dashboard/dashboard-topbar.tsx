@@ -154,12 +154,12 @@ export function DashboardTopbar() {
     <>
     <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-[#1a1919] text-sm transition-all duration-300 w-full ${isCollapsed ? 'md:w-[calc(100%-5rem)]' : 'md:w-[calc(100%-16rem)]'}`}>
       {/* Mobile Logo (left) */}
-      <div className="flex items-center gap-2 md:hidden">
+      <Link href="/command-center" className="flex items-center gap-2 md:hidden">
         <div className="w-7 h-7 bg-gradient-to-br from-primary to-[#06b77f] rounded-lg flex items-center justify-center">
           <BrainLogo className="w-6 h-6 text-[#002919]" />
         </div>
         <span className="text-base font-bold text-primary">StreamSmarter</span>
-      </div>
+      </Link>
       
       {/* Desktop spacer */}
       <div className="hidden md:block" />
