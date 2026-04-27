@@ -6,6 +6,7 @@ export async function middleware(request: NextRequest) {
   // before the callback/page handler can process it
   if (
     request.nextUrl.pathname.startsWith('/auth/callback') ||
+    request.nextUrl.pathname.startsWith('/auth/confirm') ||
     request.nextUrl.pathname.startsWith('/reset-password')
   ) {
     return NextResponse.next();
@@ -47,10 +48,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect /app routes - redirect to login if not authenticated
+  // Protect dashboard routes - redirect to login if not authenticated
   if (
     !user &&
-    request.nextUrl.pathname.startsWith('/app')
+    request.nextUrl.pathname.startsWith('/command-center')
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
@@ -64,7 +65,7 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname === '/signup')
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = '/app';
+    url.pathname = '/command-center';
     return NextResponse.redirect(url);
   }
 

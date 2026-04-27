@@ -33,9 +33,9 @@ export function FinancialImpactCard({
 }: FinancialImpactCardProps) {
   const { ratio: roiRatio, isPositive } = calculateROI(revenueGenerated, rewardsDisbursed);
   return (
-    <div className="col-span-12 lg:col-span-4 bg-[#1a1919] rounded-xl p-8 flex flex-col justify-between">
+    <div className="col-span-1 md:col-span-12 lg:col-span-4 bg-[#1a1919] rounded-xl p-4 md:p-8 flex flex-col justify-between w-full">
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">Financial Impact</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 md:mb-8">Financial Impact</h3>
         <div className="space-y-8">
           <div>
             <div className="flex items-center gap-2 mb-2">

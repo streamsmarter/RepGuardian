@@ -16,8 +16,8 @@ export function GoogleRatingGaugeCard({ rating = 0, isLoading = false }: GoogleR
   const strokeDashoffset = circumference - progress * circumference;
 
   return (
-    <div className="col-span-3 flex flex-col justify-center border-r border-white/5 pr-6">
-      <div className="relative w-48 h-48 mx-auto flex items-center justify-center">
+    <div className="col-span-1 md:col-span-3 flex flex-col justify-center md:border-r border-white/5 md:pr-6">
+      <div className="relative w-36 h-36 md:w-48 md:h-48 mx-auto flex items-center justify-center">
         <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
           <div className="w-[86%] h-[86%] rounded-full bg-primary/6 blur-2xl" />
           <div className="absolute w-full h-full border border-primary/15 rounded-full animate-[spin_20s_linear_infinite]" />

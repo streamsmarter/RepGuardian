@@ -112,23 +112,23 @@ export function ActivityFeed() {
   const activities = useMemo(() => rows.slice(0, 5).map(rowToItem), [rows]);
 
   return (
-    <div className="col-span-12 lg:col-span-12 bg-[#1a1919] rounded-2xl overflow-hidden">
-      <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-[#201f1f]/30">
-        <h3 className="text-lg font-bold">Recent Activity</h3>
-        <Link href="/app/activity" className="text-xs text-primary font-bold hover:underline">View All Logs</Link>
+    <div className="col-span-1 md:col-span-12 bg-[#1a1919] rounded-2xl overflow-hidden w-full">
+      <div className="px-4 md:px-8 py-4 md:py-6 border-b border-white/5 flex justify-between items-center bg-[#201f1f]/30">
+        <h3 className="text-base md:text-lg font-bold">Recent Activity</h3>
+        <Link href="/app/activity" className="text-xs text-primary font-bold hover:underline">View All</Link>
       </div>
       <div className="divide-y divide-white/5">
         {loading ? (
-          <div className="px-8 py-5 flex items-center gap-3 text-sm text-muted-foreground">
+          <div className="px-4 md:px-8 py-4 md:py-5 flex items-center gap-3 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading activity...
           </div>
         ) : error ? (
-          <div className="px-8 py-5 text-sm text-muted-foreground">
+          <div className="px-4 md:px-8 py-4 md:py-5 text-sm text-muted-foreground">
             {error}
           </div>
         ) : activities.length === 0 ? (
-          <div className="px-8 py-5 text-sm text-muted-foreground">
+          <div className="px-4 md:px-8 py-4 md:py-5 text-sm text-muted-foreground">
             No recent activity.
           </div>
         ) : (
@@ -138,7 +138,7 @@ export function ActivityFeed() {
             return (
               <div
                 key={activity.id}
-                className="px-8 py-5 flex items-start gap-4 hover:bg-[#201f1f] transition-colors"
+                className="px-4 md:px-8 py-4 md:py-5 flex items-start gap-3 md:gap-4 hover:bg-[#201f1f] transition-colors"
               >
                 <div
                   className={cn(

@@ -162,10 +162,10 @@ export function ReviewsTrendCard({ companyId }: ReviewsTrendCardProps) {
   }, [reviewData]);
 
   return (
-    <div className="col-span-12 lg:col-span-7 bg-[#1a1919] rounded-2xl p-8 flex flex-col">
-      <div className="flex justify-between items-center mb-8">
+    <div className="col-span-1 md:col-span-12 lg:col-span-7 bg-[#1a1919] rounded-2xl p-4 md:p-8 flex flex-col w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h3 className="text-lg font-bold">Reviews Trend</h3>
+          <h3 className="text-base md:text-lg font-bold">Reviews Trend</h3>
           <p className="text-muted-foreground text-xs">
             Performance trajectory over {timeRange === 'all' ? 'all time' : `the last ${timeRangeLabels[timeRange].toLowerCase()}`}
           </p>

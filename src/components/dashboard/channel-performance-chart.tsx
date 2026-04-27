@@ -56,28 +56,28 @@ export function ChannelPerformanceChart({ clicksCount = 0, conversionsCount = 0,
   const conversionsAreaPath = `${conversionsPath} L100 100 L0 100 Z`;
 
   return (
-    <div className="col-span-12 bg-[#1a1919] rounded-xl p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="col-span-1 md:col-span-12 bg-[#1a1919] rounded-xl p-4 md:p-8 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Channel Performance</h3>
-          <p className="text-lg font-bold">Clicks vs. Conversions</p>
+          <p className="text-base md:text-lg font-bold">Clicks vs. Conversions</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#8596ff]"></span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Click Through Rate</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">CTR</span>
             <span className="text-sm font-bold text-[#8596ff]">{(clickThroughRate * 100).toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-primary"></span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Conversion Rate</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">Conv.</span>
             <span className="text-sm font-bold text-primary">{(conversionRate * 100).toFixed(1)}%</span>
           </div>
         </div>
       </div>
       
       {/* SVG Dual Line Chart */}
-      <div className="h-64 relative">
+      <div className="h-48 md:h-64 relative">
         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
           {/* Grid Lines */}
           <line className="stroke-[#484847]/10" x1="0" x2="100" y1="25" y2="25"></line>

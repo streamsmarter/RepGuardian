@@ -290,7 +290,7 @@ export function ParticipantTable({ campaignId }: ParticipantTableProps) {
 
   if (isLoadingData) {
     return (
-      <div className="col-span-12 bg-[#1a1919] rounded-xl overflow-hidden p-8">
+      <div className="col-span-1 md:col-span-12 bg-[#1a1919] rounded-xl overflow-hidden p-4 md:p-8 w-full">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-[#262626] rounded w-1/4"></div>
           <div className="h-10 bg-[#262626] rounded"></div>

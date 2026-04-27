@@ -40,7 +40,7 @@ export function StatCard({
   const FooterIcon = iconMap[footerIconName] || TrendingUp;
 
   return (
-    <div className="col-span-12 md:col-span-4 bg-[#1a1919] rounded-2xl p-6 hover:bg-[#201f1f] transition-all cursor-pointer group">
+    <div className="col-span-1 md:col-span-4 bg-[#1a1919] rounded-2xl p-6 hover:bg-[#201f1f] transition-all cursor-pointer group w-full">
       <div className="flex items-center justify-between">
         <div
           className={cn(
@@ -76,7 +76,7 @@ export function AutopilotCard({ title, description, iconName }: AutopilotCardPro
   const Icon = iconMap[iconName] || Zap;
 
   return (
-    <div className="col-span-12 md:col-span-4 bg-[#131313] border border-white/5 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+    <div className="col-span-1 md:col-span-4 bg-[#131313] border border-white/5 rounded-2xl p-6 flex flex-col justify-center items-center text-center w-full">
       <div className="w-12 h-12 rounded-full bg-[#262626]/40 backdrop-blur-xl flex items-center justify-center text-[#06b77f] mb-4">
         <Icon className="w-5 h-5" />
       </div>

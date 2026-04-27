@@ -48,48 +48,40 @@ export function ConversionFunnel({ stats }: ConversionFunnelProps) {
   ];
 
   return (
-    <div className="bg-[#1a1919] rounded-xl p-8 overflow-hidden relative group">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">
+    <div className="bg-[#1a1919] rounded-xl p-4 md:p-8 overflow-hidden relative group w-full">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 md:mb-8">
         Conversion Funnel
       </h3>
 
-      <div className="flex items-center justify-between relative">
+      <div className="grid grid-cols-2 gap-4 md:flex md:items-center md:justify-between relative">
         {funnelSteps.map((step, index) => (
-          <div key={index} className="contents">
-            <div className="flex-1 flex flex-col items-center z-10">
-              <div
-                className={cn(
-                  'flex items-center justify-center mb-4 ring-4 ring-[#0e0e0e]',
-                  step.isHighlight
-                    ? 'w-20 h-20 rounded-full bg-gradient-to-br from-primary to-[#06b77f] shadow-lg shadow-primary/20'
-                    : 'w-16 h-16 rounded-full bg-[#262626]'
-                )}
-              >
-                {step.icon}
-              </div>
-              <span
-                className={cn(
-                  'text-2xl font-bold',
-                  step.isHighlight ? 'text-primary' : 'text-foreground'
-                )}
-              >
-                {step.value}
-              </span>
-              <span
-                className={cn(
-                  'text-[10px] uppercase font-bold tracking-tighter',
-                  step.isHighlight ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                {step.label}
-              </span>
+          <div key={index} className="flex flex-col items-center z-10">
+            <div
+              className={cn(
+                'flex items-center justify-center mb-3 md:mb-4 ring-4 ring-[#0e0e0e]',
+                step.isHighlight
+                  ? 'w-14 h-14 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-[#06b77f] shadow-lg shadow-primary/20'
+                  : 'w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#262626]'
+              )}
+            >
+              {step.icon}
             </div>
-
-            {index < funnelSteps.length - 1 && (
-              <div className="h-0.5 flex-1 bg-[#262626] mx-2 mb-10 relative">
-                <div className={cn('absolute inset-0 bg-primary/20', step.progressWidth)} />
-              </div>
-            )}
+            <span
+              className={cn(
+                'text-xl md:text-2xl font-bold',
+                step.isHighlight ? 'text-primary' : 'text-foreground'
+              )}
+            >
+              {step.value}
+            </span>
+            <span
+              className={cn(
+                'text-[10px] uppercase font-bold tracking-tighter',
+                step.isHighlight ? 'text-primary' : 'text-muted-foreground'
+              )}
+            >
+              {step.label}
+            </span>
           </div>
         ))}
       </div>

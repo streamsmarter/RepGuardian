@@ -559,7 +559,7 @@ export function ReviewsPageClient({
             </div>
 
             {/* Right: Velocity Insight Card */}
-            <div className="col-span-3 flex flex-col justify-center border-l border-white/5 pl-6">
+            <div className="col-span-1 md:col-span-3 flex flex-col justify-center md:border-l border-white/5 md:pl-6">
               <div className="p-4 bg-white/5 border border-white/5 rounded">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded bg-[#262626] flex items-center justify-center">

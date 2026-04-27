@@ -151,7 +151,7 @@ export function DashboardTopbar() {
 
   return (
     <>
-    <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-[#1a1919] text-sm transition-all duration-300 w-full md:${isCollapsed ? 'w-[calc(100%-5rem)]' : 'w-[calc(100%-16rem)]'}`}>
+    <header className={`fixed top-0 right-0 h-16 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl flex justify-between items-center px-4 md:px-8 border-b border-[#1a1919] text-sm transition-all duration-300 w-full ${isCollapsed ? 'md:w-[calc(100%-5rem)]' : 'md:w-[calc(100%-16rem)]'}`}>
       {/* Mobile Menu Button & Logo */}
       <div className="flex items-center gap-3 md:hidden">
         <button
