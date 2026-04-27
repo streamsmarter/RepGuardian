@@ -22,14 +22,14 @@ export function MetricCard({
   valueColor = 'text-white',
 }: MetricCardProps) {
   return (
-    <div className="col-span-3 bg-[#1a1919] p-6 rounded-xl flex flex-col justify-between">
+    <div className="bg-[#1a1919] p-4 md:p-6 rounded-xl flex flex-col justify-between w-full">
       <div>
         <span className="text-muted-foreground text-[0.6875rem] font-bold tracking-widest uppercase mb-1 block">
           {label}
         </span>
-        <h2 className={cn('text-3xl font-black', valueColor)}>{value}</h2>
+        <h2 className={cn('text-2xl md:text-3xl font-black', valueColor)}>{value}</h2>
       </div>
-      <div className={cn('mt-4 flex items-center gap-2 text-xs font-bold', footerColor)}>
+      <div className={cn('mt-3 md:mt-4 flex items-center gap-2 text-xs font-bold', footerColor)}>
         <FooterIcon className="w-4 h-4" />
         <span>{footerText}</span>
       </div>
@@ -45,14 +45,14 @@ interface ConversionMetricCardProps {
 
 export function ConversionMetricCard({ label, value, percentage }: ConversionMetricCardProps) {
   return (
-    <div className="col-span-3 bg-[#1a1919] p-6 rounded-xl flex flex-col justify-between">
+    <div className="bg-[#1a1919] p-4 md:p-6 rounded-xl flex flex-col justify-between w-full">
       <div>
         <span className="text-muted-foreground text-[0.6875rem] font-bold tracking-widest uppercase mb-1 block">
           {label}
         </span>
-        <h2 className="text-3xl font-black text-primary">{value}</h2>
+        <h2 className="text-2xl md:text-3xl font-black text-primary">{value}</h2>
       </div>
-      <div className="mt-4 w-full bg-[#201f1f] h-1 rounded-full overflow-hidden">
+      <div className="mt-3 md:mt-4 w-full bg-[#201f1f] h-1 rounded-full overflow-hidden">
         <div className="bg-primary h-full" style={{ width: `${percentage}%` }} />
       </div>
     </div>

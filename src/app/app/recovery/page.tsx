@@ -78,28 +78,28 @@ export default function RecoveryPage() {
   })();
 
   return (
-    <div className="px-8 py-8" style={{
+    <div className="px-4 md:px-8 py-6 md:py-8" style={{
       backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(105, 246, 184, 0.05) 1px, transparent 0)',
       backgroundSize: '24px 24px',
     }}>
         {/* Header Section */}
-        <div className="flex justify-between items-end mb-10">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6 md:mb-10">
           <div>
-            <h1 className="font-black text-4xl tracking-tight text-white mb-2">Customer Recovery</h1>
-            <p className="text-muted-foreground">
+            <h1 className="font-black text-2xl md:text-4xl tracking-tight text-white mb-2">Customer Recovery</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
               Win back at-risk customers with targeted recovery campaigns and personalized outreach.
             </p>
           </div>
           <Link href="/app/recovery/conditions">
-            <Button className="bg-gradient-to-br from-primary to-[#06b77f] px-6 py-3 rounded-lg text-[#002919] font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(105,246,184,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
-              <Settings className="w-5 h-5" />
+            <Button className="bg-gradient-to-br from-primary to-[#06b77f] px-4 md:px-6 py-2.5 md:py-3 rounded-lg text-[#002919] font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(105,246,184,0.2)] hover:scale-[1.02] active:scale-95 transition-all text-sm md:text-base">
+              <Settings className="w-4 h-4 md:w-5 md:h-5" />
               Edit Conditions
             </Button>
           </Link>
         </div>
 
         {/* Metric Bento Grid */}
-        <div className="grid grid-cols-9 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
           <MetricCard
             label="Recovery Attempts"
             value={totalReminders.toLocaleString()}
@@ -118,19 +118,19 @@ export default function RecoveryPage() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="bg-[#262626]/40 backdrop-blur-xl border border-primary/5 rounded-2xl p-6">
+        <div className="bg-[#262626]/40 backdrop-blur-xl border border-primary/5 rounded-2xl p-4 md:p-6">
           {/* Recovered Clients */}
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-extrabold text-white">Recovered Clients</h3>
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h3 className="text-lg md:text-xl font-extrabold text-white">Recovered Clients</h3>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <table className="w-full min-w-[400px]">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Client Name</th>
-                    <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
-                    <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Message Sent</th>
+                    <th className="text-left py-3 px-4 text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground">Client Name</th>
+                    <th className="text-left py-3 px-4 text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                    <th className="text-left py-3 px-4 text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground">Message Sent</th>
                   </tr>
                 </thead>
                 <tbody>

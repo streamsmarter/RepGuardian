@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createBrowserComponentClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
-import { Send, Paperclip, Smile, Sparkles } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -333,10 +333,10 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
       </div>
 
       {/* Message Input */}
-      <div className="p-12 pt-0">
+      <div className="p-4 md:p-12 pt-0">
         <form onSubmit={handleSendMessage} className="relative group">
           <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl group-focus-within:bg-primary/10 transition-all" />
-          <div className="relative flex items-center bg-[#131313] rounded-2xl p-4 pl-6 border border-white/5 group-focus-within:border-primary/30 transition-all">
+          <div className="relative flex items-center bg-[#131313] rounded-2xl p-3 md:p-4 pl-4 md:pl-6 border border-white/5 group-focus-within:border-primary/30 transition-all">
             <input
               type="text"
               placeholder="Transmit your response..."
@@ -345,14 +345,7 @@ export function MessageThread({ chatId, companyId }: MessageThreadProps) {
               disabled={sendMessageMutation.isPending}
               className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-white placeholder:text-[#adaaaa]/40"
             />
-            <div className="flex items-center space-x-4 pr-2">
-              <button type="button" className="text-[#adaaaa] hover:text-white transition-colors">
-                <Paperclip className="w-5 h-5" />
-              </button>
-              <button type="button" className="text-[#adaaaa] hover:text-white transition-colors">
-                <Smile className="w-5 h-5" />
-              </button>
-              <div className="w-[1px] h-6 bg-white/10" />
+            <div className="flex items-center pl-2">
               <button
                 type="submit"
                 disabled={!newMessage.trim() || sendMessageMutation.isPending}

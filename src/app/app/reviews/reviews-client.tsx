@@ -589,33 +589,31 @@ export function ReviewsPageClient({
 
       {/* Advanced Filtering Suite */}
       <section className="bg-[#131313] rounded-xl p-4 border border-white/5">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <input
-                type="text"
-                className="w-full bg-[#1a1919] border-none text-sm py-3 px-4 rounded focus:ring-1 focus:ring-primary/20 text-white placeholder:text-[#adaaaa]/50"
-                placeholder="Filter by keyword..."
-                value={keywordFilter}
-                onChange={(e) => setKeywordFilter(e.target.value)}
-              />
-            </div>
+        <div className="flex flex-col gap-3">
+          <div className="w-full">
+            <input
+              type="text"
+              className="w-full bg-[#1a1919] border-none text-sm py-3 px-4 rounded focus:ring-1 focus:ring-primary/20 text-white placeholder:text-[#adaaaa]/50"
+              placeholder="Filter by keyword..."
+              value={keywordFilter}
+              onChange={(e) => setKeywordFilter(e.target.value)}
+            />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-12 min-w-[160px] items-center justify-between gap-3 rounded border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex h-11 w-full items-center justify-between gap-2 rounded border border-white/8 bg-[#0e0e0e]/80 px-3 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <span>{selectedRatingLabel}</span>
-                  <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
+                  <span className="truncate">{selectedRatingLabel}</span>
+                  <ChevronDown className="h-4 w-4 text-[#8d8d8d] flex-shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
                 sideOffset={10}
-                className="min-w-[220px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
+                className="min-w-[180px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
                 {ratingFilterOptions.map((option) => (
                   <DropdownMenuItem
@@ -636,16 +634,16 @@ export function ReviewsPageClient({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-12 min-w-[190px] items-center justify-between gap-3 rounded border border-white/8 bg-[#0e0e0e]/80 px-4 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex h-11 w-full items-center justify-between gap-2 rounded border border-white/8 bg-[#0e0e0e]/80 px-3 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all hover:border-primary/20 hover:bg-[#141414]/85 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <span>{selectedReplyLabel}</span>
-                  <ChevronDown className="h-4 w-4 text-[#8d8d8d]" />
+                  <span className="truncate">{selectedReplyLabel}</span>
+                  <ChevronDown className="h-4 w-4 text-[#8d8d8d] flex-shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
                 sideOffset={10}
-                className="min-w-[220px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
+                className="min-w-[180px] rounded border border-white/8 bg-[#0e0e0e]/88 p-2 text-white shadow-none backdrop-blur-xl"
               >
                 {replyFilterOptions.map((option) => (
                   <DropdownMenuItem
@@ -663,10 +661,9 @@ export function ReviewsPageClient({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="h-8 w-px bg-white/5 mx-2" />
           <button 
             onClick={clearFilters}
-            className="bg-[#262626] px-5 py-3 rounded text-sm font-bold uppercase tracking-wider hover:bg-[#2c2c2c] transition-colors text-white"
+            className="w-full bg-[#262626] px-5 py-3 rounded text-sm font-bold uppercase tracking-wider hover:bg-[#2c2c2c] transition-colors text-white"
           >
             Clear Filters
           </button>
