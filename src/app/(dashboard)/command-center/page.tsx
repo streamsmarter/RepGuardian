@@ -117,19 +117,19 @@ export default async function CommandCenterPage() {
               title="Positive Reviews Collected"
               value={data.positiveReviews}
               footerIconName="TrendingUp"
-              footerIconColor="text-primary"
+              footerIconColor="text-secondary"
               footerText="Positive reviews since onboarding"
             />
             <StatCard
               iconName="UserPlus"
               iconBgColor="bg-[#1D3F73]/20"
-              iconColor="text-[#6FA8FF]"
+              iconColor="text-[#77C6DC]"
               label="Referrals"
-              labelColor="text-[#6FA8FF]"
+              labelColor="text-[#77C6DC]"
               title="Clients Referred"
               value={data.referredClients}
               footerIconName="TrendingUp"
-              footerIconColor="text-primary"
+              footerIconColor="text-[#77C6DC]"
               footerText="New clients brought in through referrals"
             />
 
