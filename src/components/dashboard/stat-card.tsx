@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageSquare, AlertTriangle, TrendingUp, Clock, Zap, LucideIcon } from 'lucide-react';
+import { MessageSquare, AlertTriangle, TrendingUp, Clock, Zap, UserPlus, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -9,6 +9,7 @@ const iconMap: Record<string, LucideIcon> = {
   TrendingUp,
   Clock,
   Zap,
+  UserPlus,
 };
 
 interface StatCardProps {

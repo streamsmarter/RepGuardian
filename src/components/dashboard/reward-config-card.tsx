@@ -18,16 +18,16 @@ export function RewardConfigCard({
   progressPercentage = 66,
 }: RewardConfigCardProps) {
   return (
-    <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 md:p-6 overflow-hidden relative flex-1 w-full">
+    <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 md:p-6 overflow-hidden relative flex flex-1 items-center w-full">
       {/* Background Glow */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 relative z-10 w-full">
+      <div className="flex flex-col justify-center gap-4 md:flex-row md:items-center md:justify-between md:gap-8 relative z-10 w-full min-h-full">
         <h3 className="text-xs font-bold uppercase tracking-widest text-primary whitespace-nowrap">
           Rewards
         </h3>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-8">
+        <div className="flex flex-col justify-center sm:flex-row items-center gap-4 md:gap-8">
           <div className="flex items-center gap-2">
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest whitespace-nowrap">
               Referrer

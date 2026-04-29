@@ -161,7 +161,7 @@ export default function ReferralsPage() {
               <span>Latencies: 14ms</span>
             </div>
           </div>
-          <span>v2.4.0-STABLE | © 2024 STREAMSMARTER</span>
+          <span>v2.4.0-STABLE | © 2026 STREAMSMARTER</span>
         </div>
     </div>
   );

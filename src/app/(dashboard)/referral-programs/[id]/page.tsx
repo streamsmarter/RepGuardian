@@ -23,7 +23,7 @@ export default function CampaignDetailPage({ params: _params }: CampaignDetailPa
                   Active
                 </span>
                 <span className="text-muted-foreground text-xs uppercase tracking-widest">
-                  Campaign ID: SS-2024-001
+                  Campaign ID: SS-2026-001
                 </span>
               </div>
               <h2 className="text-4xl font-extrabold tracking-tighter text-foreground">

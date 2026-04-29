@@ -31,7 +31,7 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
           </div>
         </div>
         <h2 className="text-6xl md:text-8xl font-extrabold text-foreground mt-4 md:mt-6 tracking-tighter">
-          {reputationPercent}<span className="text-primary text-4xl">%</span>
+          {reputationPercent}<span className="ml-1 inline-block text-primary text-4xl">%</span>
         </h2>
         <p className="text-muted-foreground mt-4 max-w-xs leading-relaxed">
           No active reputation risks detected
@@ -45,11 +45,14 @@ export function HeroScoreCard({ reputationPercent = 0 }: HeroScoreCardProps) {
       </div>
 
       <div className="mt-8 flex gap-4 relative z-10">
-        <Link href="/app/reviews">
-          <Button className="px-6 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-xs rounded-lg hover:opacity-90 transition-all">
+        <Button
+          asChild
+          className="cursor-pointer px-6 py-2.5 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-xs rounded-lg shadow-[0_10px_24px_-12px_rgba(105,246,184,0.55)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_16px_34px_-14px_rgba(105,246,184,0.75)]"
+        >
+          <Link href="/app/reviews">
             View Insights
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </div>
   );
