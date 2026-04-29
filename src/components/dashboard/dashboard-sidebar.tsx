@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   HeartHandshake,
+  LogOut,
 } from 'lucide-react';
 import { BrainLogo } from '@/components/brain-logo';
 import { cn } from '@/lib/utils';
@@ -61,6 +62,11 @@ export function DashboardSidebar() {
   }, [supabase]);
 
   const isActiveSubscription = subscriptionStatus === 'active';
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.assign('/login');
+  };
 
   return (
     <aside 
@@ -119,15 +125,29 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      {!isCollapsed && !isActiveSubscription && (
-        <div className="p-6">
+      <div className={cn("mt-auto space-y-3 border-t border-white/5", isCollapsed ? "p-2" : "p-4")}>
+        <button
+          onClick={handleSignOut}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-lg py-3 transition-all duration-200 cursor-pointer',
+            isCollapsed ? 'justify-center px-2' : 'px-4',
+            'text-[#e6e1e1] hover:bg-[#201f1f] hover:text-white'
+          )}
+          title={isCollapsed ? 'Log Out' : undefined}
+          type="button"
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span className="font-medium">Log Out</span>}
+        </button>
+
+        {!isCollapsed && !isActiveSubscription && (
           <Link href="/app/billing">
             <Button className="w-full py-3 bg-gradient-to-br from-primary to-[#06b77f] text-[#002919] font-bold text-sm rounded-lg hover:opacity-90 active:scale-95 transition-all">
               Upgrade to Pro
             </Button>
           </Link>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 }

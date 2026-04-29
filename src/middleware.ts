@@ -2,12 +2,14 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
   // Skip middleware for auth-related routes to prevent OTP token consumption
   // before the callback/page handler can process it
   if (
-    request.nextUrl.pathname.startsWith('/auth/callback') ||
-    request.nextUrl.pathname.startsWith('/auth/confirm') ||
-    request.nextUrl.pathname.startsWith('/reset-password')
+    pathname.startsWith('/auth/callback') ||
+    pathname.startsWith('/auth/confirm') ||
+    pathname.startsWith('/reset-password')
   ) {
     return NextResponse.next();
   }
@@ -48,11 +50,11 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect dashboard routes - redirect to login if not authenticated
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith('/command-center')
-  ) {
+  const protectedPrefixes = ['/command-center', '/app', '/edit-referral', '/referral-programs'];
+  const isProtectedRoute = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+  // Protect app routes - redirect to login if not authenticated
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -61,8 +63,8 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (
     user &&
-    (request.nextUrl.pathname === '/login' ||
-      request.nextUrl.pathname === '/signup')
+    (pathname === '/login' ||
+      pathname === '/register')
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/command-center';
