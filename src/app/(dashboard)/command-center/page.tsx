@@ -14,6 +14,17 @@ type CompanyReputation = {
   };
 };
 
+type PositiveReviewRow = {
+  id: string;
+  stars: number | null;
+  review_published_at: string | null;
+};
+
+type ReferredClientRow = {
+  id: string;
+  referred_by: string | null;
+};
+
 async function getCommandCenterData(companyId: string) {
   const supabase = await createServerComponentClient();
 
@@ -33,12 +44,14 @@ async function getCommandCenterData(companyId: string) {
 
   // Positive reviews collected since the company was onboarded
   let positiveReviews = 0;
-  const { data: positiveReviewRows } = await supabase
+  const { data: positiveReviewRowsRaw } = await supabase
     .from('review')
     .select('id, stars, review_published_at')
     .eq('company_id', companyId)
     .gte('stars', 4)
     .lte('stars', 5);
+
+  const positiveReviewRows = (positiveReviewRowsRaw ?? []) as PositiveReviewRow[];
 
   if (positiveReviewRows?.length) {
     const onboardedAt = companyCreatedAt ? new Date(companyCreatedAt).getTime() : Number.NEGATIVE_INFINITY;
@@ -50,13 +63,15 @@ async function getCommandCenterData(companyId: string) {
   }
 
   // Clients referred - all clients with a non-empty referred_by value
-  const { data: referredClientRows } = await supabase
+  const { data: referredClientRowsRaw } = await supabase
     .from('client')
     .select('id, referred_by')
     .eq('company_id', companyId)
     .not('referred_by', 'is', null);
 
-  const referredClients = (referredClientRows || []).filter((client) => {
+  const referredClientRows = (referredClientRowsRaw ?? []) as ReferredClientRow[];
+
+  const referredClients = referredClientRows.filter((client) => {
     if (typeof client.referred_by !== 'string') return false;
     return client.referred_by.trim().length > 0;
   }).length;
